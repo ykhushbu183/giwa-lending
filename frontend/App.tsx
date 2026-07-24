@@ -3,7 +3,7 @@ import { createPublicClient, createWalletClient, http, custom } from "viem";
 import { giwaSepolia } from "viem/chains";
 
 const DOJANG_SCROLL = "0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9";
-const LENDING_POOL = "0xYOUR_CONTRACT_ADDRESS_HERE";
+const LENDING_POOL = "0x87decf03676C4F6e77141F64811a45C0E1a767BD";
 const VERIFIED_TOKEN = "0xBCdB22f56642DE57624CfC2fBb9eE398cF3CA268";
 const ATTESTER_ID = "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034";
 
