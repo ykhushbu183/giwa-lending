@@ -2,23 +2,8 @@ import { useState, useEffect } from "react";
 import { createPublicClient, createWalletClient, http, custom } from "viem";
 import { giwaSepolia } from "viem/chains";
 
-const DOJANG_SCROLL = "0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9";
-const LENDING_POOL = "0x87decf03676C4F6e77141F64811a45C0E1a767BD";
+const LENDING_POOL = "0x905B90d080eEdB6DDbB5B47068C57C801F9E4C10";
 const VERIFIED_TOKEN = "0xBCdB22f56642DE57624CfC2fBb9eE398cF3CA268";
-const ATTESTER_ID = "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034";
-
-const dojangAbi = [
-  {
-    inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "bytes32", name: "", type: "bytes32" },
-    ],
-    name: "isVerified",
-    outputs: [{ internalType: "bool", name: "", type: "bool" }],
-    stateMutability: "view",
-    type: "function",
-  },
-];
 
 const poolAbi = [
   {
@@ -119,7 +104,6 @@ const publicClient = createPublicClient({
 
 function App() {
   const [account, setAccount] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
   const [repayAmount, setRepayAmount] = useState("");
@@ -147,25 +131,10 @@ function App() {
 
   useEffect(() => {
     if (account) {
-      checkKYC();
       fetchPoolStats();
       fetchUserInfo();
     }
   }, [account]);
-
-  async function checkKYC() {
-    try {
-      const data = await publicClient.readContract({
-        address: DOJANG_SCROLL,
-        abi: dojangAbi,
-        functionName: "isVerified",
-        args: [account, ATTESTER_ID],
-      });
-      setIsVerified(data);
-    } catch (e) {
-      console.error("KYC check failed:", e);
-    }
-  }
 
   async function fetchPoolStats() {
     try {
@@ -332,10 +301,6 @@ function App() {
             padding: 12, background: "#161b22", borderRadius: 8, border: "1px solid #30363d", marginBottom: 16
           }}>
             <p>Wallet: <code>{account.slice(0, 6)}...{account.slice(-4)}</code></p>
-            <p>KYC: {isVerified ?
-              <span style={{ color: "#3fb950" }}>✅ Verified</span> :
-              <span style={{ color: "#f85149" }}>❌ Not Verified</span>}
-            </p>
           </div>
 
           {loading && <div style={{ color: "#d29922", marginBottom: 12, fontWeight: "bold" }}>{loading}...</div>}
@@ -356,48 +321,38 @@ function App() {
             </div>
           </div>
 
-          {isVerified && (
-            <>
-              <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d", marginBottom: 16 }}>
-                <h3>Your Position</h3>
-                <p>Deposits: <strong>{userDeposits}</strong> | Interest Earned: <strong style={{ color: "#3fb950" }}>+{lendInterest}</strong></p>
-                <p>Borrows: <strong>{userBorrows}</strong> | Interest Owing: <strong style={{ color: "#f85149" }}>-{borrowInterest}</strong></p>
-                <p>Collateral: <strong>{userCollateral}</strong></p>
-              </div>
+          <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d", marginBottom: 16 }}>
+            <h3>Your Position</h3>
+            <p>Deposits: <strong>{userDeposits}</strong> | Interest Earned: <strong style={{ color: "#3fb950" }}>+{lendInterest}</strong></p>
+            <p>Borrows: <strong>{userBorrows}</strong> | Interest Owing: <strong style={{ color: "#f85149" }}>-{borrowInterest}</strong></p>
+            <p>Collateral: <strong>{userCollateral}</strong></p>
+          </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d" }}>
-                  <h3 style={{ color: "#3fb950" }}>Lend</h3>
-                  <input value={depositAmount} onChange={e => setDepositAmount(e.target.value)}
-                    placeholder="Amount in VT"
-                    style={{ width: "90%", padding: 8, marginBottom: 8, background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
-                  <button onClick={deposit} style={{ padding: "8px 16px", background: "#238636", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", marginRight: 8 }}>Deposit</button>
-                  <input value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
-                    placeholder="Amount"
-                    style={{ width: "90%", padding: 8, margin: "8px 0", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
-                  <button onClick={withdraw} style={{ padding: "8px 16px", background: "#21262d", color: "#c9d1d9", border: "1px solid #30363d", borderRadius: 4, cursor: "pointer" }}>Withdraw</button>
-                </div>
-
-                <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d" }}>
-                  <h3 style={{ color: "#f0883e" }}>Borrow</h3>
-                  <input value={borrowAmount} onChange={e => setBorrowAmount(e.target.value)}
-                    placeholder="Amount"
-                    style={{ width: "90%", padding: 8, marginBottom: 8, background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
-                  <button onClick={borrow} style={{ padding: "8px 16px", background: "#d29922", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", marginRight: 8 }}>Borrow</button>
-                  <input value={repayAmount} onChange={e => setRepayAmount(e.target.value)}
-                    placeholder="Amount"
-                    style={{ width: "90%", padding: 8, margin: "8px 0", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
-                  <button onClick={repay} style={{ padding: "8px 16px", background: "#21262d", color: "#c9d1d9", border: "1px solid #30363d", borderRadius: 4, cursor: "pointer" }}>Repay</button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {!isVerified && (
-            <div style={{ padding: 20, background: "#161b22", borderRadius: 8, border: "1px solid #f85149", textAlign: "center", color: "#f85149" }}>
-              ⚠️ Only Upbit KYC verified wallets can use this protocol.
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d" }}>
+              <h3 style={{ color: "#3fb950" }}>Lend</h3>
+              <input value={depositAmount} onChange={e => setDepositAmount(e.target.value)}
+                placeholder="Amount in VT"
+                style={{ width: "90%", padding: 8, marginBottom: 8, background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
+              <button onClick={deposit} style={{ padding: "8px 16px", background: "#238636", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", marginRight: 8 }}>Deposit</button>
+              <input value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)}
+                placeholder="Amount"
+                style={{ width: "90%", padding: 8, margin: "8px 0", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
+              <button onClick={withdraw} style={{ padding: "8px 16px", background: "#21262d", color: "#c9d1d9", border: "1px solid #30363d", borderRadius: 4, cursor: "pointer" }}>Withdraw</button>
             </div>
-          )}
+
+            <div style={{ padding: 16, background: "#161b22", borderRadius: 8, border: "1px solid #30363d" }}>
+              <h3 style={{ color: "#f0883e" }}>Borrow</h3>
+              <input value={borrowAmount} onChange={e => setBorrowAmount(e.target.value)}
+                placeholder="Amount"
+                style={{ width: "90%", padding: 8, marginBottom: 8, background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
+              <button onClick={borrow} style={{ padding: "8px 16px", background: "#d29922", color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", marginRight: 8 }}>Borrow</button>
+              <input value={repayAmount} onChange={e => setRepayAmount(e.target.value)}
+                placeholder="Amount"
+                style={{ width: "90%", padding: 8, margin: "8px 0", background: "#0d1117", border: "1px solid #30363d", borderRadius: 4, color: "#fff" }} />
+              <button onClick={repay} style={{ padding: "8px 16px", background: "#21262d", color: "#c9d1d9", border: "1px solid #30363d", borderRadius: 4, cursor: "pointer" }}>Repay</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

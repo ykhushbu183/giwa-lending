@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-interface IDojangScroll {
-    function isVerified(address, bytes32) external view returns (bool);
-}
-
 interface IERC20 {
     function transferFrom(address, address, uint256) external returns (bool);
     function transfer(address, uint256) external returns (bool);
@@ -13,9 +9,6 @@ interface IERC20 {
 }
 
 contract GiwaLendingPool {
-    IDojangScroll public dojang = IDojangScroll(0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9);
-    bytes32 constant UPBIT_KOREA = 0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034;
-
     IERC20 public token;
     uint256 public totalDeposits;
     uint256 public totalBorrows;
@@ -40,12 +33,7 @@ contract GiwaLendingPool {
         token = IERC20(_token);
     }
 
-    modifier onlyVerified() {
-        require(dojang.isVerified(msg.sender, UPBIT_KOREA), "KYC required");
-        _;
-    }
-
-    function deposit(uint256 amount) external onlyVerified {
+    function deposit(uint256 amount) external {
         require(amount > 0, "Zero amount");
         token.transferFrom(msg.sender, address(this), amount);
         users[msg.sender].deposits += amount;
@@ -67,7 +55,7 @@ contract GiwaLendingPool {
         emit Withdrawn(msg.sender, amount, interest);
     }
 
-    function borrow(uint256 amount) external onlyVerified {
+    function borrow(uint256 amount) external {
         UserInfo storage user = users[msg.sender];
         require(user.deposits > 0, "Deposit first");
         uint256 requiredCollateral = (amount * COLLATERAL_RATIO) / 100;
