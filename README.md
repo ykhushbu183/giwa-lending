@@ -10,18 +10,21 @@ A **KYC-gated** lending & borrowing protocol on **GIWA Sepolia**. Only verified 
 
 ```
 ┌─ Frontend ─────────────────────────────────────┐
-│  Connect → KYC check → Access Market/Dashboard │
+│  Connect → Dojang KYC check → Access App       │
 │  wagmi + viem → contract calls                 │
 └───────────────────────┬────────────────────────┘
                         │
+┌─ Dojang (GIWA KYC) ──▼────────────────────────┐
+│  DojangScroll.isVerified() — EAS attestation   │
+│  Checks: Upbit Korea attester ID               │
+└───────────────────────┬────────────────────────┘
+                        │
 ┌─ Contracts ───────────▼────────────────────────┐
-│  KycRegistry.sol       — verified address list │
 │  GiwaToken.sol         — ERC20 with public mint│
 │  GiwaLendingPool.sol   — deposit/borrow/repay  │
 └───────────────────────┬────────────────────────┘
                         │
 ┌─ GIWA Sepolia (91342) ▼────────────────────────┐
-│  KycRegistry: 0x416E...                      │
 │  GLT Token:    0xCcB1...                      │
 │  Lending Pool: 0x4C62...                      │
 └────────────────────────────────────────────────┘
@@ -31,15 +34,14 @@ A **KYC-gated** lending & borrowing protocol on **GIWA Sepolia**. Only verified 
 
 | Contract | Address |
 |----------|---------|
-| **KycRegistry** | `0x416Ec231d556AA51a5af5621C87Aa54a589b20F2` |
+| **DojangScroll** | `0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9` |
 | **GLT Token** | `0xCcB10752990A7508933d2fF509e011f71032073F` |
 | **Lending Pool** | `0x4C62dDcDe751f39Bc0661fCaA9Dc0C7d68dE0eCA` |
 
-### KycRegistry
-- `isVerified(address)` — Check if wallet is KYC-approved
-- `addVerified(address)` — Owner-only: add to verified list
-- `addBatch(address[])` — Owner-only: batch add
-- `removeVerified(address)` — Owner-only: remove from list
+### DojangScroll (KYC)
+- `isVerified(address, bytes32 attesterId)` — Check wallet has Upbit Korea KYC attestation
+- Attester ID: `0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034`
+- EAS contract: `0x4200000000000000000000000000000000000021`
 
 ### GiwaToken
 - `mint(uint256)` — Public mint (KYC-gated on frontend)
@@ -50,7 +52,7 @@ A **KYC-gated** lending & borrowing protocol on **GIWA Sepolia**. Only verified 
 
 ## Features
 
-- **KYC Gating** — Only verified wallets can access lending/borrowing
+- **KYC Gating** — Only wallets with a Dojang attestation (Upbit Korea KYC) can access lending/borrowing
 - **Mint GLT** — Public mint, only gas fees
 - **Supply** — 5% APY, time-based interest
 - **Borrow** — 10% APR, 150% collateral ratio, max 66% LTV

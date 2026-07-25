@@ -2,7 +2,8 @@ export const GIWA = 91342
 
 export const TOKEN = "0xCcB10752990A7508933d2fF509e011f71032073F"
 export const POOL = "0x4C62dDcDe751f39Bc0661fCaA9Dc0C7d68dE0eCA"
-export const KYC = "0x416Ec231d556AA51a5af5621C87Aa54a589b20F2"
+export const DOJANG_SCROLL = "0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9"
+export const UPBIT_ATTESTER = "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034"
 
 export const GIWA_CHAIN = {
   id: GIWA,
@@ -43,9 +44,8 @@ export const POOL_ABI = [
   { inputs: [], name: "getPoolStats", outputs: [{ internalType: "uint256", name: "", type: "uint256" }, { internalType: "uint256", name: "", type: "uint256" }, { internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ] as const
 
-export const KYC_ABI = [
-  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "isVerified", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
-  { inputs: [{ internalType: "address", name: "user", type: "address" }], name: "addVerified", outputs: [], stateMutability: "nonpayable", type: "function" },
+export const DOJANG_ABI = [
+  { inputs: [{ internalType: "address", name: "addr", type: "address" }, { internalType: "bytes32", name: "attesterId", type: "bytes32" }], name: "isVerified", outputs: [{ internalType: "bool", name: "", type: "bool" }], stateMutability: "view", type: "function" },
 ] as const
 
 export function fmt(v: string | bigint, d = 2, showSign = false) {

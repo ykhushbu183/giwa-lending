@@ -172,7 +172,7 @@ function BenefitsSection() {
   const items = [
     {
       title: "KYC-Gated Access",
-      desc: "Only verified wallets on the KycRegistry can lend and borrow. Unverified addresses are automatically blocked.",
+      desc: "Only wallets with a Dojang attestation from Upbit Korea KYC can lend and borrow. Unverified addresses are automatically blocked.",
       svg: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>

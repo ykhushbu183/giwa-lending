@@ -1,13 +1,13 @@
 import { useAccount, useReadContract } from "wagmi"
-import { KYC, KYC_ABI } from "../config"
+import { DOJANG_SCROLL, DOJANG_ABI, UPBIT_ATTESTER } from "../config"
 
 export default function KycGate({ children }: { children: React.ReactNode }) {
   const { address, isConnected } = useAccount()
   const { data: verified, isLoading } = useReadContract({
-    address: KYC,
-    abi: KYC_ABI,
+    address: DOJANG_SCROLL,
+    abi: DOJANG_ABI,
     functionName: "isVerified",
-    args: [address!],
+    args: [address!, UPBIT_ATTESTER],
     query: { enabled: !!address },
   })
 
@@ -36,7 +36,7 @@ export default function KycGate({ children }: { children: React.ReactNode }) {
         </p>
         <p style={{ color: "var(--text-dim)", fontSize: 13, lineHeight: 1.6 }}>
           Your wallet (<code style={{ fontSize: 12, fontFamily: "monospace" }}>{address?.slice(0, 6)}...{address?.slice(-4)}</code>)
-          is not in the verified registry. Contact the protocol admin to get KYC-verified.
+          does not have a Upbit Korea KYC attestation. Verify your wallet at the GIWA Playground.
         </p>
       </div>
     )
