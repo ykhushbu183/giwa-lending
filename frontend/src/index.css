@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+:root {
+  --bg-page: #000000;
+  --grid-color: rgba(255, 255, 255, 0.015);
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #141414;
+  --bg-input: #0a0a0a;
+  --bg-overlay: rgba(0, 0, 0, 0.8);
+  --bg-header: rgba(255, 255, 255, 0.02);
+  --bg-accent-soft: rgba(255, 255, 255, 0.06);
+
+  --border-card: rgba(255, 255, 255, 0.08);
+  --border-card-hover: rgba(255, 255, 255, 0.18);
+  --border-input: rgba(255, 255, 255, 0.08);
+  --border-header: rgba(255, 255, 255, 0.04);
+
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #8a8a8a;
+  --text-dim: #737373;
+  --text-input: #e5e5e5;
+  --text-accent: #ffffff;
+
+  --btn-primary-bg: #ffffff;
+  --btn-primary-hover: #e5e5e5;
+  --btn-primary-text: #000000;
+  --btn-primary-disabled-bg: #141414;
+  --btn-primary-disabled-text: #737373;
+
+  --btn-ghost-bg: rgba(255, 255, 255, 0.05);
+  --btn-ghost-hover: rgba(255, 255, 255, 0.08);
+  --btn-ghost-text: #a3a3a3;
+
+  --accent-green: #10b981;
+  --accent-yellow: #f59e0b;
+  --accent-red: #ef4444;
+  --accent-purple: #8b5cf6;
+  --accent-green-soft: rgba(16, 185, 129, 0.12);
+  --accent-yellow-soft: rgba(245, 158, 11, 0.12);
+  --accent-red-soft: rgba(239, 68, 68, 0.12);
+  --accent-purple-soft: rgba(139, 92, 246, 0.12);
+  --accent-soft-hover: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  transition: background-color 0.25s ease;
+  letter-spacing: -0.01em;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: center center;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-dim); border-radius: 3px; }
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  color: var(--text-input);
+  transition: border-color 0.18s ease;
+}
+
+input::placeholder {
+  color: var(--text-dim);
+}
+
+input:focus {
+  border-color: var(--text-accent);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--text-accent);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  transition: border-color 0.18s ease;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 24px rgba(0,0,0,0.4);
+}
+.card:hover {
+  border-color: var(--border-card-hover);
+}
+
+.card-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  user-select: none;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  user-select: none;
+}
+
+.numbered-step {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  display: block;
+}
+.numbered-step .num {
+  color: var(--text-muted);
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-bg) !important;
+  color: var(--btn-primary-text) !important;
+  transition: background-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--btn-primary-hover) !important;
+}
+.btn-primary:disabled {
+  background-color: var(--btn-primary-disabled-bg) !important;
+  color: var(--btn-primary-disabled-text) !important;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background-color: var(--btn-ghost-bg) !important;
+  color: var(--btn-ghost-text) !important;
+  transition: background-color 0.18s ease, color 0.18s ease !important;
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--btn-ghost-hover) !important;
+}
+.btn-ghost:disabled {
+  color: var(--btn-ghost-disabled-text) !important;
+  cursor: not-allowed;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-scale {
+  animation: fadeScale 0.2s ease-out forwards;
+}
