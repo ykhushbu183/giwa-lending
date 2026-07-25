@@ -49,6 +49,28 @@ function toB(v: string) {
 
 type View = "dashboard" | "market";
 
+function detectWallets() {
+  type W = { id: string; name: string; icon: string; provider: any };
+  const list: W[] = [];
+  const push = (id: string, name: string, icon: string, p: any) => {
+    if (p && !list.find(x => x.id === id)) list.push({ id, name, icon, provider: p });
+  };
+  if ((window as any).ethereum?.providers?.length) {
+    (window as any).ethereum.providers.forEach((p: any) => {
+      if (p.isMetaMask) push("metamask", "MetaMask", "🦊", p);
+      else if (p.isCoinbaseWallet) push("coinbase", "Coinbase", "🔵", p);
+      else push("eip", "EIP-1193", "💼", p);
+    });
+  } else if ((window as any).ethereum) {
+    push("metamask", "MetaMask", "🦊", (window as any).ethereum);
+  }
+  if ((window as any).okxwallet) push("okx", "OKX Wallet", "🟠", (window as any).okxwallet);
+  if ((window as any).trustwallet) push("trust", "Trust Wallet", "💙", (window as any).trustwallet);
+  if ((window as any).bitkeep) push("bitget", "Bitget Wallet", "🟣", (window as any).bitkeep);
+  if ((window as any).coinbaseWalletExtension) push("coinbase", "Coinbase", "🔵", (window as any).coinbaseWalletExtension);
+  return list;
+}
+
 export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem("glt") || "dark");
   const [view, setView] = useState<View>("market");
@@ -70,38 +92,41 @@ export default function App() {
   const [mint, setMint] = useState("100");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+  const [provider, setProvider] = useState<any>(null);
 
   const dk = theme === "dark";
+  const ok = chain === GIWA_CHAIN;
+  const wallets = detectWallets();
 
   useEffect(() => { localStorage.setItem("glt", theme); }, [theme]);
   useEffect(() => {
-    if (!window.ethereum) return;
-    const h = (id: string) => setChain(Number(id));
-    window.ethereum.on("chainChanged", h);
-    return () => window.ethereum?.removeListener("chainChanged", h);
+    if (!(window as any).ethereum) return;
+    const h = (id: string) => { setChain(Number(id)); };
+    (window as any).ethereum.on("chainChanged", h);
+    return () => (window as any).ethereum?.removeListener("chainChanged", h);
   }, []);
 
-  const ok = chain === GIWA_CHAIN;
+  async function connectWallet(prov: any) {
+    try {
+      const [a] = await prov.request({ method: "eth_requestAccounts" });
+      const c = await prov.request({ method: "eth_chainId" });
+      setProvider(prov);
+      setAcct(a); setChain(Number(c));
+      setShowPicker(false);
+      if (Number(c) === GIWA_CHAIN) await load(a);
+    } catch { setMsg("Rejected"); setShowPicker(false); }
+  }
 
   async function switchNet() {
     try {
-      await window.ethereum!.request({ method: "wallet_switchEthereumChain", params: [{ chainId: GIWA.chainId }] });
+      await (provider || (window as any).ethereum)!.request({ method: "wallet_switchEthereumChain", params: [{ chainId: GIWA.chainId }] });
     } catch (e: any) {
       if (e.code === 4902) {
-        try { await window.ethereum!.request({ method: "wallet_addEthereumChain", params: [GIWA] }); }
+        try { await (provider || (window as any).ethereum)!.request({ method: "wallet_addEthereumChain", params: [GIWA] }); }
         catch { setMsg("Cancelled"); }
       }
     }
-  }
-
-  async function connect() {
-    if (!window.ethereum) return setMsg("Install MetaMask");
-    try {
-      const [a] = await window.ethereum.request({ method: "eth_requestAccounts" });
-      const c = await window.ethereum.request({ method: "eth_chainId" });
-      setAcct(a); setChain(Number(c));
-      if (Number(c) === GIWA_CHAIN) await load(a);
-    } catch { setMsg("Rejected"); }
   }
 
   async function load(a: string) {
@@ -141,10 +166,11 @@ export default function App() {
 
   async function w(fn: string, args: any[]) {
     const { createWalletClient, custom } = await import("viem");
-    const w = createWalletClient({ account: acct as any, chain: giwaSepolia, transport: custom(window.ethereum!) });
+    const p = provider || (window as any).ethereum;
+    const wallet = createWalletClient({ account: acct as any, chain: giwaSepolia, transport: custom(p) });
     const addr = fn === "mint" ? TOKEN : POOL;
     const abi = fn === "mint" || fn === "approve" ? T_ABI : P_ABI;
-    await w.writeContract({ address: addr, abi, functionName: fn, args });
+    await wallet.writeContract({ address: addr, abi, functionName: fn, args });
     setMsg(`✅ ${fn} done!`);
   }
 
@@ -164,26 +190,32 @@ export default function App() {
     t: dk ? "#e8eaed" : "#1a1d23",
     m: dk ? "#6b7280" : "#6b7280",
     ib: dk ? "#0a0a14" : "#eef0f5",
-    ib2: dk ? "#1e1e30" : "#dce0e8",
   };
 
   const n = {
-    outer: { background: C.bg, color: C.t, fontFamily: "'Inter', -apple-system, sans-serif", minHeight: "100vh" } as React.CSSProperties,
-    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 60, borderBottom: `1px solid ${C.b}`, background: C.s } as React.CSSProperties,
+    outer: { background: C.bg, color: C.t, fontFamily: "'Inter', -apple-system, sans-serif", minHeight: "100vh", position: "relative" as const },
+    nav: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 60, borderBottom: `1px solid ${C.b}`, background: C.s },
     logo: { fontSize: 17, fontWeight: 700, background: "linear-gradient(135deg, #6366f1, #a855f7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" } as React.CSSProperties,
     tab: (a: boolean) => ({ padding: "6px 14px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 500, cursor: "pointer", background: a ? (dk ? "rgba(99,102,241,0.15)" : "rgba(99,102,241,0.1)") : "transparent", color: a ? "#818cf8" : C.m }),
-    btn: (c: string) => ({ padding: "8px 18px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#fff", background: c }) as React.CSSProperties,
-    card: { background: C.s, borderRadius: 12, border: `1px solid ${C.b}`, overflow: "hidden" } as React.CSSProperties,
-    ch: { padding: "14px 18px", borderBottom: `1px solid ${C.b}`, display: "flex", justifyContent: "space-between", alignItems: "center" } as React.CSSProperties,
-    cb: { padding: 18 } as React.CSSProperties,
-    row: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" } as React.CSSProperties,
-    lb: { fontSize: 13, color: C.m } as React.CSSProperties,
-    vl: { fontSize: 14, fontWeight: 600 } as React.CSSProperties,
+    btn: (c: string) => ({ padding: "8px 18px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "#fff", background: c }),
+    card: { background: C.s, borderRadius: 12, border: `1px solid ${C.b}`, overflow: "hidden" },
+    ch: { padding: "14px 18px", borderBottom: `1px solid ${C.b}`, display: "flex", justifyContent: "space-between", alignItems: "center" },
+    cb: { padding: 18 },
+    row: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0" },
+    lb: { fontSize: 13, color: C.m },
+    vl: { fontSize: 14, fontWeight: 600 },
     inp: { width: "100%", padding: "10px 14px", borderRadius: 10, fontSize: 15, border: `1px solid ${dk ? "#2a2a3a" : "#d0d4e0"}`, background: C.ib, color: C.t, outline: "none", boxSizing: "border-box" as React.CSSProperties["boxSizing"] },
     act: (a: boolean, c: string) => ({ flex: 1, padding: "7px 0", borderRadius: 8, border: "none", fontSize: 12, fontWeight: 600, cursor: "pointer", background: a ? C.s : "transparent", color: a ? c : C.m, boxShadow: a ? `0 1px 4px ${dk ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.08)"}` : "none" }),
     g3: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 },
     stat: { padding: "12px 8px", textAlign: "center" as const, borderRadius: 10, background: dk ? "rgba(99,102,241,0.06)" : "rgba(99,102,241,0.04)" },
     tag: (bg: string, c: string) => ({ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 6, fontSize: 11, fontWeight: 500, background: bg, color: c }),
+    modal: {
+      overlay: { position: "fixed" as const, inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100 },
+      box: { background: C.s, borderRadius: 16, padding: 24, width: 320, maxWidth: "90vw", border: `1px solid ${C.b}`, boxShadow: "0 20px 60px rgba(0,0,0,0.4)" },
+      title: { fontSize: 16, fontWeight: 700, marginBottom: 4 },
+      sub: { fontSize: 13, color: C.m, marginBottom: 20 },
+      item: { display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, cursor: "pointer", border: `1px solid ${C.b}`, marginBottom: 8, transition: "all 0.15s", background: "transparent" as const, width: "100%", color: C.t, fontSize: 14, fontWeight: 600 },
+    },
   };
 
   const needApprove = acct && Number(allow) < Number(toB(amt || "0"));
@@ -201,12 +233,32 @@ export default function App() {
           <button style={{ width: 34, height: 34, borderRadius: 8, border: `1px solid ${C.b}`, background: "transparent", cursor: "pointer", fontSize: 15, display: "flex", alignItems: "center", justifyContent: "center" }}
             onClick={() => setTheme(dk ? "light" : "dark")}>{dk ? "☀️" : "🌙"}</button>
           {!acct ? (
-            <button style={n.btn("linear-gradient(135deg, #6366f1, #8b5cf6)")} onClick={connect}>Connect</button>
+            <button style={n.btn("linear-gradient(135deg, #6366f1, #8b5cf6)")} onClick={() => { if (wallets.length > 1) setShowPicker(true); else if (wallets.length === 1) connectWallet(wallets[0].provider); else setMsg("No wallet found"); }}>Connect</button>
           ) : !ok ? (
             <button style={n.btn("linear-gradient(135deg, #eab308, #d97706)")} onClick={switchNet}>Switch Network</button>
           ) : <span style={n.tag("rgba(34,197,94,0.15)", "#22c55e")}>🟢 GIWA</span>}
         </div>
       </div>
+
+      {showPicker && (
+        <div style={n.modal.overlay} onClick={() => setShowPicker(false)}>
+          <div style={n.modal.box} onClick={e => e.stopPropagation()}>
+            <div style={n.modal.title}>Connect Wallet</div>
+            <div style={n.modal.sub}>Choose a wallet to connect</div>
+            {wallets.map(w => (
+              <button key={w.id} style={n.modal.item}
+                onClick={() => connectWallet(w.provider)}
+                onMouseEnter={e => (e.currentTarget.style.background = dk ? "rgba(99,102,241,0.1)" : "rgba(99,102,241,0.05)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
+                <span style={{ fontSize: 24 }}>{w.icon}</span>
+                <span>{w.name}</span>
+              </button>
+            ))}
+            <button style={{ ...n.modal.item, justifyContent: "center", color: C.m, fontSize: 13, marginTop: 4 }}
+              onClick={() => setShowPicker(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div style={{ maxWidth: 700, margin: "0 auto", padding: "24px 16px" }}>
         {!acct && (
@@ -214,17 +266,12 @@ export default function App() {
             <div style={{ fontSize: 56, marginBottom: 16 }}>🏦</div>
             <h1 style={{ fontSize: 26, fontWeight: 700, marginBottom: 6 }}>GiwaLend</h1>
             <p style={{ color: C.m, marginBottom: 24, fontSize: 14 }}>Lend & borrow GLT on GIWA Sepolia testnet</p>
-            <button style={{ ...n.btn("linear-gradient(135deg, #6366f1, #8b5cf6)"), padding: "12px 32px", fontSize: 15 }} onClick={connect}>
+            <button style={{ ...n.btn("linear-gradient(135deg, #6366f1, #8b5cf6)"), padding: "12px 32px", fontSize: 15 }}
+              onClick={() => { if (wallets.length > 1) setShowPicker(true); else if (wallets.length === 1) connectWallet(wallets[0].provider); else setMsg("No wallet found"); }}>
               Connect Wallet
             </button>
             <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 24, fontSize: 13, color: C.m }}>
-              <span>1. Connect Wallet</span>
-              <span>→</span>
-              <span>2. Get GLT</span>
-              <span>→</span>
-              <span>3. Supply & Earn</span>
-              <span>→</span>
-              <span>4. Borrow</span>
+              <span>1. Connect Wallet</span><span>→</span><span>2. Get GLT</span><span>→</span><span>3. Supply & Earn</span><span>→</span><span>4. Borrow</span>
             </div>
           </div>
         )}
@@ -244,10 +291,7 @@ export default function App() {
               <div style={n.ch}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <span style={{ fontSize: 28 }}>🪙</span>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14 }}>{sym}</div>
-                    <div style={{ fontSize: 11, color: C.m }}>GIWA Sepolia</div>
-                  </div>
+                  <div><div style={{ fontWeight: 700, fontSize: 14 }}>{sym}</div><div style={{ fontSize: 11, color: C.m }}>GIWA Sepolia</div></div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 11, color: C.m }}>Wallet</div>
@@ -262,12 +306,10 @@ export default function App() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
                   <div style={{ textAlign: "center", padding: 8, background: dk ? "rgba(34,197,94,0.06)" : "rgba(34,197,94,0.04)", borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: C.m }}>Total Supplied</div>
-                    <div style={{ fontWeight: 600, color: "#22c55e" }}>{fmt(tDep, 2)}</div>
+                    <div style={{ fontSize: 11, color: C.m }}>Total Supplied</div><div style={{ fontWeight: 600, color: "#22c55e" }}>{fmt(tDep, 2)}</div>
                   </div>
                   <div style={{ textAlign: "center", padding: 8, background: dk ? "rgba(234,179,8,0.06)" : "rgba(234,179,8,0.04)", borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: C.m }}>Total Borrowed</div>
-                    <div style={{ fontWeight: 600, color: "#eab308" }}>{fmt(tBor, 2)}</div>
+                    <div style={{ fontSize: 11, color: C.m }}>Total Borrowed</div><div style={{ fontWeight: 600, color: "#eab308" }}>{fmt(tBor, 2)}</div>
                   </div>
                 </div>
 
@@ -309,21 +351,16 @@ export default function App() {
             </div>
 
             <div style={{ ...n.card, marginTop: 16 }}>
-              <div style={n.ch}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Get Tokens</span>
-              </div>
+              <div style={n.ch}><span style={{ fontWeight: 600, fontSize: 14 }}>Get Tokens</span></div>
               <div style={{ ...n.cb, display: "flex", gap: 8, alignItems: "center" }}>
                 <input value={mint} onChange={e => setMint(e.target.value)} style={{ ...n.inp, width: 100, textAlign: "center" }} />
                 <button style={n.btn("linear-gradient(135deg, #6366f1, #8b5cf6)")} onClick={() => send(() => w("mint", [toB(mint)]))}>Mint {sym}</button>
-                {needApprove && <span style={{ fontSize: 11, color: C.m }}>First mint, then approve below ↓</span>}
+                {needApprove && <span style={{ fontSize: 11, color: C.m }}>First mint, then approve ↓</span>}
               </div>
             </div>
 
             <div style={{ ...n.card, marginTop: 16 }}>
-              <div style={n.ch}>
-                <span style={{ fontWeight: 600, fontSize: 14 }}>Your Position</span>
-                <span style={n.tag(health.bg, health.c)}>{health.l}</span>
-              </div>
+              <div style={n.ch}><span style={{ fontWeight: 600, fontSize: 14 }}>Your Position</span><span style={n.tag(health.bg, health.c)}>{health.l}</span></div>
               <div style={n.cb}>
                 <div style={n.row}><span style={n.lb}>Supplied</span><span style={n.vl}>{fmt(uDep, 4)} {sym}</span></div>
                 <div style={n.row}><span style={n.lb}>Interest Earned</span><span style={{ ...n.vl, color: "#22c55e" }}>+{fmt(lInt, 4)} {sym}</span></div>
@@ -332,8 +369,7 @@ export default function App() {
                 <div style={n.row}><span style={n.lb}>Collateral</span><span style={n.vl}>{fmt(uCol, 4)} {sym}</span></div>
                 <div style={{ marginTop: 12 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
-                    <span style={{ color: C.m }}>Health Factor</span>
-                    <span style={{ color: health.c, fontWeight: 600 }}>{health.pct}%</span>
+                    <span style={{ color: C.m }}>Health Factor</span><span style={{ color: health.c, fontWeight: 600 }}>{health.pct}%</span>
                   </div>
                   <div style={{ height: 6, borderRadius: 3, background: dk ? "#1a1a2e" : "#e0e4ec", overflow: "hidden" }}>
                     <div style={{ height: "100%", borderRadius: 3, width: `${health.pct}%`, background: health.c, transition: "width 0.5s" }} />
@@ -347,27 +383,21 @@ export default function App() {
         {acct && ok && view === "dashboard" && (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 20 }}>
-              <div style={n.card}>
-                <div style={n.cb}>
-                  <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Net Worth</div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>{fmt(uDep, 2)} {sym}</div>
-                  <div style={{ fontSize: 11, color: "#22c55e" }}>+{fmt(lInt, 4)} earned</div>
-                </div>
-              </div>
-              <div style={n.card}>
-                <div style={n.cb}>
-                  <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Borrow Balance</div>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>{fmt(uBor, 2)} {sym}</div>
-                  <div style={{ fontSize: 11, color: "#ef4444" }}>-{fmt(bInt, 4)} owing</div>
-                </div>
-              </div>
-              <div style={n.card}>
-                <div style={n.cb}>
-                  <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Health Factor</div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: health.c }}>{health.l}</div>
-                  <div style={{ fontSize: 11, color: C.m }}>{health.pct}% · 150% collat.</div>
-                </div>
-              </div>
+              <div style={n.card}><div style={n.cb}>
+                <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Net Worth</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{fmt(uDep, 2)} {sym}</div>
+                <div style={{ fontSize: 11, color: "#22c55e" }}>+{fmt(lInt, 4)} earned</div>
+              </div></div>
+              <div style={n.card}><div style={n.cb}>
+                <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Borrow Balance</div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{fmt(uBor, 2)} {sym}</div>
+                <div style={{ fontSize: 11, color: "#ef4444" }}>-{fmt(bInt, 4)} owing</div>
+              </div></div>
+              <div style={n.card}><div style={n.cb}>
+                <div style={{ fontSize: 11, color: C.m, marginBottom: 4 }}>Health Factor</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: health.c }}>{health.l}</div>
+                <div style={{ fontSize: 11, color: C.m }}>{health.pct}% · 150% collat.</div>
+              </div></div>
             </div>
 
             <div style={n.card}>
