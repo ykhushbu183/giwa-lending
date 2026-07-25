@@ -21,8 +21,9 @@ function HeroSection({ onConnect, isConnected }: { onConnect: () => void; isConn
           <span style={{ color: "var(--text-accent)" }}>on GIWA Chain</span>
         </h1>
         <p className="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed mb-10" style={{ color: "var(--text-muted)" }}>
-          GiwaLend is a lending protocol built on GIWA Chain. Supply GLT to earn 5% APY,
-          borrow against your collateral at 10% APR, and manage your position in real time.
+          GiwaLend is a <strong>KYC-gated lending protocol</strong> built on GIWA Chain.
+          Only verified users can supply GLT to earn 5% APY, borrow against collateral at 10% APR,
+          and manage their position in real time.
         </p>
         <div className="flex items-center justify-center gap-4">
           {isConnected ? (
@@ -54,8 +55,8 @@ function AboutSection() {
         </h2>
         <div className="space-y-6 text-base leading-relaxed text-center" style={{ color: "var(--text-muted)" }}>
           <p className="text-lg">
-            GiwaLend is a <strong className="font-medium" style={{ color: "var(--text-secondary)" }}>decentralized lending protocol</strong> built on GIWA Chain.
-            Users can supply GLT tokens to earn interest, or borrow against their supplied collateral.
+            GiwaLend is a <strong className="font-medium" style={{ color: "var(--text-secondary)" }}>KYC-gated lending protocol</strong> built on GIWA Chain.
+            Only verified users can supply GLT tokens to earn interest, or borrow against their supplied collateral.
           </p>
           <p className="text-lg">
             Built for GASOK 2026, it&apos;s a fully functional lending market with real-time interest accrual,
@@ -73,7 +74,7 @@ function AboutSection() {
 
 function HowItWorksSection() {
   const steps = [
-    { num: "01", title: "Connect Your Wallet", desc: "Link your wallet to GiwaLend using MetaMask, OKX, Trust Wallet, or any supported wallet on GIWA Chain." },
+    { num: "01", title: "Connect & Verify", desc: "Link your wallet to GiwaLend. Only KYC-verified wallets on the registry can access the protocol — unverified addresses are restricted." },
     { num: "02", title: "Mint GLT (Test Token)", desc: "GLT is a publicly mintable test ERC20 token — no faucet, no real value. Just enter an amount and mint directly in the app. It costs only GIWA Sepolia gas (~0 ETH)." },
     { num: "03", title: "Supply & Earn", desc: "Deposit GLT into the lending pool to start earning 5% APY. Your supplied amount becomes collateral." },
     { num: "04", title: "Borrow Against Collateral", desc: "Use up to 66% of your supplied value as collateral to borrow GLT at 10% APR." },
@@ -102,7 +103,7 @@ function FeaturesSection() {
   const features = [
     {
       title: "Supply",
-      desc: "Deposit GLT into the pool and earn 5% APY. Your supply is used as collateral for borrowing.",
+      desc: "Deposit GLT into the pool and earn 5% APY. Your supply is used as collateral for borrowing. KYC verification required.",
       to: "/market",
       accent: "var(--accent-green)",
       bg: "var(--accent-green-soft)",
@@ -114,7 +115,7 @@ function FeaturesSection() {
     },
     {
       title: "Borrow",
-      desc: "Borrow GLT against your supplied collateral at 10% APR. Maintain a healthy >150% collateral ratio.",
+      desc: "Borrow GLT against your supplied collateral at 10% APR. Maintain a healthy >150% collateral ratio. KYC verification required.",
       to: "/market",
       accent: "var(--accent-yellow)",
       bg: "var(--accent-yellow-soft)",
@@ -170,8 +171,8 @@ function FeaturesSection() {
 function BenefitsSection() {
   const items = [
     {
-      title: "Single Asset Pool",
-      desc: "One token (GLT) for supply and borrow — no complexity, no multi-asset management.",
+      title: "KYC-Gated Access",
+      desc: "Only verified wallets on the KycRegistry can lend and borrow. Unverified addresses are automatically blocked.",
       svg: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/>
@@ -243,7 +244,7 @@ function CtaSection({ onConnect, isConnected }: { onConnect: () => void; isConne
           Ready to get started?
         </h2>
         <p className="text-base mb-8 max-w-sm mx-auto" style={{ color: "var(--text-muted)" }}>
-          Connect your wallet to start lending and borrowing on GIWA Chain.
+          Connect your KYC-verified wallet to start lending and borrowing on GIWA Chain.
         </p>
         {isConnected ? (
           <NavLink to="/market" className="btn-primary px-8 py-3.5 rounded-xl text-base font-semibold no-underline">
@@ -268,7 +269,7 @@ function FooterSection() {
         <a href="https://sepolia-explorer.giwa.io" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-accent)" }} className="hover:underline">Explorer</a>
       </p>
       <p className="text-[0.65rem]" style={{ color: "var(--text-dim)" }}>
-        Community project built for GASOK 2026. Not affiliated with GIWA or Upbit.
+        KYC-gated lending protocol built for GASOK 2026. Not affiliated with GIWA or Upbit.
       </p>
     </footer>
   )

@@ -1,4 +1,4 @@
-import { useState, Component } from "react"
+import { useState, useEffect, Component } from "react"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { WagmiProvider, http, createConfig } from "wagmi"
@@ -7,6 +7,7 @@ import { GIWA_CHAIN } from "./config"
 import Header from "./components/Header"
 import WalletModal from "./components/WalletModal"
 import ToastContainer from "./components/Toast"
+import KycGate from "./components/KycGate"
 import Home from "./pages/Home"
 import MarketPage from "./pages/MarketPage"
 import DashboardPage from "./pages/DashboardPage"
@@ -99,8 +100,8 @@ export default function App() {
             <ToastContainer />
             <Routes>
               <Route path="/" element={<Home onConnectRequest={() => setShowModal(true)} />} />
-              <Route path="/market" element={<MarketPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/market" element={<KycGate><MarketPage /></KycGate>} />
+              <Route path="/dashboard" element={<KycGate><DashboardPage /></KycGate>} />
             </Routes>
             {showModal && <WalletModal onClose={() => setShowModal(false)} />}
           </BrowserRouter>

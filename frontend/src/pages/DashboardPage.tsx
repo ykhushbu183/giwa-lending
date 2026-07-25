@@ -23,7 +23,7 @@ export default function DashboardPage() {
       <div className="animate-in text-center" style={{ maxWidth: 560, margin: "0 auto", padding: "60px 16px" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Dashboard</h1>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>Connect your wallet to view your position</p>
+        <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>Connect your KYC-verified wallet to view your position</p>
         <button onClick={() => window.dispatchEvent(new CustomEvent("open-wallet-modal"))}
           style={{ padding: "12px 28px", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)" }}>
           Connect Wallet
