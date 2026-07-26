@@ -221,14 +221,13 @@ export default function MarketPage() {
 
   return (
     <div className="animate-in px-6 md:px-12 lg:px-20" style={{ paddingTop: 40, paddingBottom: 80 }}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <div className="max-w-3xl mx-auto">
         <div className="eyebrow mb-4">Market</div>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-10" style={{ color: "var(--text-primary)" }}>
           Lend & Borrow
         </h1>
 
-        <div className="card p-8 mb-8">
+        <div className="card p-8 mb-8 animate-delay-1" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.05s" }}>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-accent-soft)" }}>
@@ -258,7 +257,7 @@ export default function MarketPage() {
           </div>
         </div>
 
-        <div className="card p-8 mb-8">
+        <div className="card p-8 mb-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.1s", opacity: 0 }}>
           <div className="flex gap-2 p-1 rounded-xl mb-6" style={{ background: "var(--bg-accent-soft)" }}>
             {(["supply", "withdraw", "borrow", "repay"] as const).map(m => (
               <button key={m} onClick={() => { setMode(m); setAmt("") }}
@@ -322,7 +321,7 @@ export default function MarketPage() {
           )}
         </div>
 
-        <div className="card p-8 mb-8">
+        <div className="card p-8 mb-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.15s", opacity: 0 }}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Get GLT Tokens</h2>
             <span className="card-badge">Step 1</span>
@@ -341,7 +340,7 @@ export default function MarketPage() {
           </div>
         </div>
 
-        <div className="card p-8">
+        <div className="card p-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.2s", opacity: 0 }}>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Your Position</h2>
             <span className="text-sm font-mono font-semibold" style={{ color: h.color }}>{h.label}</span>
@@ -365,7 +364,11 @@ export default function MarketPage() {
               <span className="font-semibold" style={{ color: h.color }}>{h.pct}%</span>
             </div>
             <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-accent-soft)" }}>
-              <div style={{ height: "100%", borderRadius: 2, width: `${h.pct}%`, background: h.color, transition: "width 0.5s" }} />
+              <div style={{ height: "100%", borderRadius: 2, width: `${h.pct}%`,
+                background: `linear-gradient(90deg, ${h.color}, ${h.color}dd)`,
+                transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+                boxShadow: `0 0 6px ${h.color}44`,
+              }} />
             </div>
           </div>
         </div>

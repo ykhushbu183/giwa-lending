@@ -68,11 +68,12 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           {[
-            { l: "Net Worth", v: fmt(uDep, 4), s: `+${fmt(lInt, 4)} earned`, sc: "var(--accent-green)" },
-            { l: "Borrowed", v: fmt(uBor, 4), s: `-${fmt(bInt, 4)} owing`, sc: "var(--accent-red)" },
-            { l: "Health", v: h.label, s: `${h.pct}% · 150% collat.`, sc: "var(--text-secondary)" },
+            { l: "Net Worth", v: fmt(uDep, 4), s: `+${fmt(lInt, 4)} earned`, sc: "var(--accent-green)", delay: "0.05s" },
+            { l: "Borrowed", v: fmt(uBor, 4), s: `-${fmt(bInt, 4)} owing`, sc: "var(--accent-red)", delay: "0.1s" },
+            { l: "Health", v: h.label, s: `${h.pct}% · 150% collat.`, sc: "var(--text-secondary)", delay: "0.15s" },
           ].map(x => (
-            <div key={x.l} className="card p-6 text-center">
+            <div key={x.l} className="card p-6 text-center"
+              style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: x.delay, opacity: 0 }}>
               <div className="card-badge mb-3">{x.l}</div>
               <div className="text-2xl font-bold mb-1" style={{ color: x.l === "Health" ? h.color : "var(--text-primary)" }}>{x.v}</div>
               <div className="text-xs" style={{ color: x.sc }}>{x.s}</div>
@@ -80,7 +81,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        <div className="card p-8 mb-8">
+        <div className="card p-8 mb-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.2s", opacity: 0 }}>
           <h2 className="text-lg font-semibold mb-5" style={{ color: "var(--text-primary)" }}>Supplies</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -99,7 +100,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card p-8 mb-8">
+        <div className="card p-8 mb-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.25s", opacity: 0 }}>
           <h2 className="text-lg font-semibold mb-5" style={{ color: "var(--text-primary)" }}>Borrows</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -118,7 +119,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card p-8">
+        <div className="card p-8" style={{ animation: "fadeIn 0.45s ease-out forwards", animationDelay: "0.3s", opacity: 0 }}>
           <h2 className="text-lg font-semibold mb-5" style={{ color: "var(--text-primary)" }}>Pool Stats</h2>
           {[
             { l: "Total Supplied", v: fmt(tDep ?? BigInt(0), 4), c: "var(--accent-green)" },
