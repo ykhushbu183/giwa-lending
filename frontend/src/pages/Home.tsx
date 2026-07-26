@@ -279,9 +279,10 @@ function FooterSection() {
 export default function Home({ onConnectRequest }: { onConnectRequest: () => void }) {
   const { isConnected } = useAccount()
   return (
-    <div className="px-6 md:px-12 lg:px-20">
-      <HeroSection onConnect={onConnectRequest} isConnected={isConnected} />
+    <>
       <TestnetNotice />
+      <div className="px-6 md:px-12 lg:px-20">
+      <HeroSection onConnect={onConnectRequest} isConnected={isConnected} />
       <AboutSection />
       <HowItWorksSection />
       <FeaturesSection />

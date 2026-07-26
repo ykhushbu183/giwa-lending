@@ -2,16 +2,13 @@ export default function TestnetNotice() {
   return (
     <div
       style={{
-        padding: "14px 20px",
-        borderRadius: 12,
-        fontSize: 15,
+        padding: "12px 20px",
+        fontSize: 14,
         color: "var(--text-primary)",
-        backgroundColor: "var(--bg-card)",
-        border: "1px solid var(--border-card)",
+        backgroundColor: "var(--bg-header)",
+        borderBottom: "1px solid var(--border-header)",
         textAlign: "center",
         lineHeight: 1.6,
-        maxWidth: 720,
-        margin: "24px auto 0",
       }}
     >
       🧪 <strong>Public Testnet</strong> — This dApp is currently open for everyone to test.
