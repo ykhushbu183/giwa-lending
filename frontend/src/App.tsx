@@ -7,7 +7,6 @@ import { GIWA_CHAIN } from "./config"
 import Header from "./components/Header"
 import WalletModal from "./components/WalletModal"
 import ToastContainer from "./components/Toast"
-import TestnetNotice from "./components/TestnetNotice"
 import KycGate from "./components/KycGate"
 import Home from "./pages/Home"
 import MarketPage from "./pages/MarketPage"
@@ -99,7 +98,6 @@ export default function App() {
           <BrowserRouter>
             <Header onConnectRequest={() => setShowModal(true)} />
             <ToastContainer />
-            <TestnetNotice />
             <Routes>
               <Route path="/" element={<Home onConnectRequest={() => setShowModal(true)} />} />
               <Route path="/market" element={<KycGate><MarketPage /></KycGate>} />

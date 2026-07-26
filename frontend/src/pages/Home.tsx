@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useAccount } from "wagmi"
+import TestnetNotice from "../components/TestnetNotice"
 
 function HeroSection({ onConnect, isConnected }: { onConnect: () => void; isConnected: boolean }) {
   return (
@@ -280,6 +281,7 @@ export default function Home({ onConnectRequest }: { onConnectRequest: () => voi
   return (
     <div className="px-6 md:px-12 lg:px-20">
       <HeroSection onConnect={onConnectRequest} isConnected={isConnected} />
+      <TestnetNotice />
       <AboutSection />
       <HowItWorksSection />
       <FeaturesSection />
