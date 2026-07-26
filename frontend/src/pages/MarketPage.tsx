@@ -1,17 +1,47 @@
-import { useState, useEffect, useRef } from "react"
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from "wagmi"
-import { GIWA, TOKEN, POOL, TOKEN_ABI, POOL_ABI, fmt, toB, calcHealth } from "../config"
-import { toast, dismissToast } from "../components/Toast"
+import { useState } from "react"
+import { useAccount, useReadContract, useWriteContract, useSwitchChain } from "wagmi"
+import { createPublicClient, http } from "viem"
+import { GIWA, GIWA_CHAIN, TOKEN, POOL, TOKEN_ABI, POOL_ABI, fmt, toB, calcHealth } from "../config"
+import { toast } from "../components/Toast"
 
 type Act = "supply" | "withdraw" | "borrow" | "repay"
+
+const GIWA_CLIENT = createPublicClient({
+  chain: GIWA_CHAIN,
+  transport: http("https://sepolia-rpc.giwa.io"),
+})
+
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.8s linear infinite", display: "inline-block", verticalAlign: "middle" }}>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" opacity="0.2" />
+      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ActionBtn({ children, onClick, color, loading }: {
+  children: React.ReactNode; onClick: () => void; color: string; loading?: boolean
+}) {
+  return (
+    <button disabled={loading} onClick={onClick}
+      className="w-full rounded-lg border-none text-sm font-semibold flex items-center justify-center gap-2"
+      style={{ padding: "11px 0", background: color, color: "#000", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
+      {loading && <Spinner />}
+      {children}
+    </button>
+  )
+}
 
 export default function MarketPage() {
   const { address, chainId } = useAccount()
   const [mode, setMode] = useState<Act>("supply")
   const [amt, setAmt] = useState("")
   const [mint, setMint] = useState("100")
-  const [busy, setBusy] = useState("")
-  const toastIdRef = useRef<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [loadingLabel, setLoadingLabel] = useState("")
+  const { switchChain } = useSwitchChain()
+  const { writeContractAsync } = useWriteContract()
 
   const { data: sym } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "symbol", query: { enabled: !!address } })
   const { data: bal } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "balanceOf", args: [address!], query: { enabled: !!address } })
@@ -27,45 +57,104 @@ export default function MarketPage() {
   const bInt = userInfo?.[4] ?? BigInt(0)
   const util = tDep === BigInt(0) ? BigInt(0) : (tBor ?? BigInt(0)) * BigInt(100) / (tDep ?? BigInt(1))
   const h = calcHealth(uDep, uBor)
-  const { switchChain } = useSwitchChain()
   const na = allow !== undefined && amt ? BigInt(allow.toString()) < toB(amt) : true
+  const symStr = typeof sym === "string" ? sym : "GLT"
 
-  const { writeContract, data: hash, isPending } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
-
-  useEffect(() => {
-    if (!isPending && !isConfirming && hash && busy) {
-      if (isSuccess) {
-        toast(`${busy} successful`, "success", hash)
-      } else {
-        toast(`${busy} failed on-chain`, "error")
+  async function execTx(config: any, pendingLabel: string, successLabel: string) {
+    setLoadingLabel(pendingLabel)
+    try {
+      const hash = await writeContractAsync(config)
+      toast(`${pendingLabel}`, "pending")
+      const receipt = await GIWA_CLIENT.waitForTransactionReceipt({ hash })
+      if (receipt.status === "reverted") {
+        toast(`Transaction reverted on-chain`, "error")
+        throw new Error("reverted")
       }
-      if (toastIdRef.current) dismissToast(toastIdRef.current)
-      toastIdRef.current = null
-      setBusy("")
+      toast(`${successLabel}`, "success", hash)
+    } catch (e: any) {
+      const m = e?.shortMessage || e?.message || ""
+      const isRejected = m.includes("denied") || m.includes("rejected")
+      if (isRejected) {
+        toast(`Transaction cancelled`, "error")
+      } else if (e?.message !== "reverted") {
+        toast(`Transaction failed`, "error")
+      }
+      throw e
     }
-  }, [isPending, isConfirming, hash, busy, isSuccess])
+  }
 
-  async function wc(fn: string, args: any[]) {
-    const actionLabel = fn.charAt(0).toUpperCase() + fn.slice(1)
-    setBusy(fn)
-    const tid = toast(`${actionLabel} pending — confirm in wallet...`, "pending")
-    toastIdRef.current = tid
-    writeContract({
-      address: fn === "mint" || fn === "approve" ? TOKEN : POOL as `0x${string}`,
-      abi: fn === "mint" || fn === "approve" ? TOKEN_ABI : POOL_ABI,
-      functionName: fn as any,
-      args,
-    }, {
-      onError(e: any) {
-        const m = e?.shortMessage || e?.message || ""
-        const label = m.includes("denied") || m.includes("rejected") ? "cancelled" : "failed"
-        toast(`Transaction ${label}`, "error")
-        if (toastIdRef.current) dismissToast(toastIdRef.current)
-        toastIdRef.current = null
-        setBusy("")
-      },
-    })
+  async function run(action: string, fn: () => Promise<void>) {
+    setLoading(true)
+    try {
+      await fn()
+    } finally {
+      setLoading(false)
+      setLoadingLabel("")
+    }
+  }
+
+  async function handleSupply() {
+    const amount = toB(amt)
+    if (amount <= BigInt(0)) return
+    if (na) {
+      await execTx(
+        { address: TOKEN, abi: TOKEN_ABI, functionName: "approve", args: [POOL, amount] },
+        `Approving ${fmt(amount, 2)} ${symStr}...`,
+        `${fmt(amount, 2)} ${symStr} approved!`
+      )
+    }
+    await execTx(
+      { address: POOL, abi: POOL_ABI, functionName: "deposit", args: [amount] },
+      `Supplying ${fmt(amount, 2)} ${symStr}...`,
+      `${fmt(amount, 2)} ${symStr} supplied!`
+    )
+  }
+
+  async function handleWithdraw() {
+    const amount = toB(amt)
+    if (amount <= BigInt(0)) return
+    await execTx(
+      { address: POOL, abi: POOL_ABI, functionName: "withdraw", args: [amount] },
+      `Withdrawing ${fmt(amount, 2)} ${symStr}...`,
+      `${fmt(amount, 2)} ${symStr} withdrawn!`
+    )
+  }
+
+  async function handleBorrow() {
+    const amount = toB(amt)
+    if (amount <= BigInt(0)) return
+    await execTx(
+      { address: POOL, abi: POOL_ABI, functionName: "borrow", args: [amount] },
+      `Borrowing ${fmt(amount, 2)} ${symStr}...`,
+      `${fmt(amount, 2)} ${symStr} borrowed!`
+    )
+  }
+
+  async function handleRepay() {
+    const amount = toB(amt)
+    if (amount <= BigInt(0)) return
+    if (allow !== undefined && BigInt(allow.toString()) < amount) {
+      await execTx(
+        { address: TOKEN, abi: TOKEN_ABI, functionName: "approve", args: [POOL, amount] },
+        `Approving ${fmt(amount, 2)} ${symStr}...`,
+        `${fmt(amount, 2)} ${symStr} approved!`
+      )
+    }
+    await execTx(
+      { address: POOL, abi: POOL_ABI, functionName: "repay", args: [amount] },
+      `Repaying ${fmt(amount, 2)} ${symStr}...`,
+      `${fmt(amount, 2)} ${symStr} repaid!`
+    )
+  }
+
+  async function handleMint() {
+    const amount = toB(mint)
+    if (amount <= BigInt(0)) return
+    await execTx(
+      { address: TOKEN, abi: TOKEN_ABI, functionName: "mint", args: [amount] },
+      `Minting ${fmt(amount, 2)} ${symStr}...`,
+      `${fmt(amount, 2)} ${symStr} minted!`
+    )
   }
 
   const ok = chainId === GIWA
@@ -115,12 +204,13 @@ export default function MarketPage() {
 
   return (
     <div className="animate-in" style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       <div className="card" style={{ marginBottom: 16 }}>
         <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div className="flex items-center gap-2">
             <span style={{ fontSize: 24 }}>🪙</span>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{typeof sym === "string" ? sym : "GLT"}</div>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{symStr}</div>
               <div style={{ fontSize: 11, color: "var(--text-dim)", fontFamily: "monospace" }}>GIWA Sepolia</div>
             </div>
           </div>
@@ -162,10 +252,10 @@ export default function MarketPage() {
         </div>
         <div style={{ padding: "16px 18px" }}>
           <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 10 }}>
-            {mode === "supply" && <>Supply <strong>{typeof sym === "string" ? sym : "GLT"}</strong> to earn <strong style={{ color: "var(--accent-green)" }}>5% APY</strong></>}
-            {mode === "withdraw" && <>Withdraw <strong>{typeof sym === "string" ? sym : "GLT"}</strong> · Supplied: <strong>{fmt(uDep, 2)}</strong></>}
-            {mode === "borrow" && <>Borrow <strong>{typeof sym === "string" ? sym : "GLT"}</strong> at <strong style={{ color: "var(--accent-yellow)" }}>10% APR</strong> · Max: <strong>{fmt(uCol, 2)}</strong></>}
-            {mode === "repay" && <>Repay <strong>{typeof sym === "string" ? sym : "GLT"}</strong> · Borrowed: <strong>{fmt(uBor, 2)}</strong></>}
+            {mode === "supply" && <>Supply <strong>{symStr}</strong> to earn <strong style={{ color: "var(--accent-green)" }}>5% APY</strong></>}
+            {mode === "withdraw" && <>Withdraw <strong>{symStr}</strong> · Supplied: <strong>{fmt(uDep, 2)}</strong></>}
+            {mode === "borrow" && <>Borrow <strong>{symStr}</strong> at <strong style={{ color: "var(--accent-yellow)" }}>10% APR</strong> · Max: <strong>{fmt(uCol, 2)}</strong></>}
+            {mode === "repay" && <>Repay <strong>{symStr}</strong> · Borrowed: <strong>{fmt(uBor, 2)}</strong></>}
           </div>
           <div className="flex gap-2">
             <input value={amt} onChange={e => setAmt(e.target.value)} placeholder="0.00"
@@ -180,39 +270,29 @@ export default function MarketPage() {
           </div>
           <div style={{ marginTop: 12 }}>
             {mode === "supply" && na && (
-              <button disabled={isPending || isConfirming} onClick={() => wc("approve", [POOL, BigInt("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF")])}
-                className="w-full rounded-lg border-none text-sm font-semibold"
-                style={{ padding: "11px 0", background: "var(--accent-yellow)", color: "#000", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-                {(isPending || isConfirming) ? "Confirming..." : "Approve Pool"}
-              </button>
+              <ActionBtn onClick={() => run("supply", handleSupply)} color="var(--accent-yellow)" loading={loading}>
+                Approve Pool
+              </ActionBtn>
             )}
             {mode === "supply" && !na && (
-              <button disabled={isPending || isConfirming} onClick={() => wc("deposit", [toB(amt)])}
-                className="w-full rounded-lg border-none text-sm font-semibold"
-                style={{ padding: "11px 0", background: "var(--accent-green)", color: "#000", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-                {(isPending || isConfirming) ? "Confirming..." : `Supply ${typeof sym === "string" ? sym : "GLT"}`}
-              </button>
+              <ActionBtn onClick={() => run("supply", handleSupply)} color="var(--accent-green)" loading={loading}>
+                Supply {symStr}
+              </ActionBtn>
             )}
             {mode === "withdraw" && (
-              <button disabled={isPending || isConfirming} onClick={() => wc("withdraw", [toB(amt)])}
-                className="w-full rounded-lg border-none text-sm font-semibold"
-                style={{ padding: "11px 0", background: "var(--accent-yellow)", color: "#000", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-                {(isPending || isConfirming) ? "Confirming..." : `Withdraw ${typeof sym === "string" ? sym : "GLT"}`}
-              </button>
+              <ActionBtn onClick={() => run("withdraw", handleWithdraw)} color="var(--accent-yellow)" loading={loading}>
+                Withdraw {symStr}
+              </ActionBtn>
             )}
             {mode === "borrow" && (
-              <button disabled={isPending || isConfirming} onClick={() => wc("borrow", [toB(amt)])}
-                className="w-full rounded-lg border-none text-sm font-semibold"
-                style={{ padding: "11px 0", background: "var(--accent-yellow)", color: "#000", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-                {(isPending || isConfirming) ? "Confirming..." : `Borrow ${typeof sym === "string" ? sym : "GLT"}`}
-              </button>
+              <ActionBtn onClick={() => run("borrow", handleBorrow)} color="var(--accent-yellow)" loading={loading}>
+                Borrow {symStr}
+              </ActionBtn>
             )}
             {mode === "repay" && (
-              <button disabled={isPending || isConfirming} onClick={() => wc("repay", [toB(amt)])}
-                className="w-full rounded-lg border-none text-sm font-semibold"
-                style={{ padding: "11px 0", background: "var(--accent-green)", color: "#000", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-                {(isPending || isConfirming) ? "Confirming..." : `Repay ${typeof sym === "string" ? sym : "GLT"}`}
-              </button>
+              <ActionBtn onClick={() => run("repay", handleRepay)} color="var(--accent-green)" loading={loading}>
+                Repay {symStr}
+              </ActionBtn>
             )}
           </div>
         </div>
@@ -232,10 +312,9 @@ export default function MarketPage() {
         <div style={{ padding: "6px 18px 14px", display: "flex", gap: 8, alignItems: "center" }}>
           <input value={mint} onChange={e => setMint(e.target.value)}
             style={{ width: 100, padding: "10px 14px", borderRadius: 8, fontSize: 14, textAlign: "center" }} />
-          <button disabled={isPending || isConfirming} onClick={() => wc("mint", [toB(mint)])}
-            style={{ padding: "10px 18px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)", whiteSpace: "nowrap", opacity: (isPending || isConfirming) ? 0.6 : 1 }}>
-            {(isPending || isConfirming) ? "..." : `Mint ${typeof sym === "string" ? sym : "GLT"}`}
-          </button>
+          <ActionBtn onClick={() => run("mint", handleMint)} color="var(--btn-primary-bg)" loading={loading}>
+            Mint {symStr}
+          </ActionBtn>
         </div>
       </div>
 
