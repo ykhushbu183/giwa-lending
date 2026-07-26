@@ -1,24 +1,13 @@
-import { useAccount, useReadContract } from "wagmi"
-import { DOJANG_SCROLL, DOJANG_ABI, UPBIT_ATTESTER } from "../config"
+import { useAccount } from "wagmi"
 
 export default function TestnetNotice() {
-  const { address, isConnected } = useAccount()
-  const { data: verified } = useReadContract({
-    address: DOJANG_SCROLL,
-    abi: DOJANG_ABI,
-    functionName: "isVerified",
-    args: [address!, UPBIT_ATTESTER],
-    query: { enabled: !!address },
-  })
+  const { isConnected } = useAccount()
 
-  if (!isConnected || verified !== false) return null
+  if (!isConnected) return null
 
   return (
     <div
       style={{
-        marginTop: 24,
-        marginLeft: 16,
-        marginRight: 16,
         padding: "14px 20px",
         borderRadius: 12,
         fontSize: 15,
