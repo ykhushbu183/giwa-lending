@@ -280,8 +280,8 @@ export default function Home({ onConnectRequest }: { onConnectRequest: () => voi
   const { isConnected } = useAccount()
   return (
     <>
-      <TestnetNotice />
       <div className="px-6 md:px-12 lg:px-20">
+      <TestnetNotice />
       <HeroSection onConnect={onConnectRequest} isConnected={isConnected} />
       <AboutSection />
       <HowItWorksSection />
