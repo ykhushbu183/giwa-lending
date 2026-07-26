@@ -283,7 +283,9 @@ export default function MarketPage() {
               className="flex-1 px-4 py-3 rounded-xl text-base border"
               style={{ background: "var(--bg-input)", borderColor: "var(--border-input)", color: "var(--text-input)" }} />
             <button onClick={() => {
-              const v = mode === "supply" ? (bal ?? BigInt(0)) : mode === "withdraw" ? uDep : mode === "borrow" ? uCol : uBor
+              const maxBorrow = uDep > uCol ? ((uDep - uCol) * 100n) / 150n : 0n
+              const maxWithdraw = uDep > uCol ? uDep - uCol : 0n
+              const v = mode === "supply" ? (bal ?? BigInt(0)) : mode === "withdraw" ? maxWithdraw : mode === "borrow" ? maxBorrow : uBor
               setAmt(fmt(v, 6))
             }}
               className="px-4 rounded-xl text-xs font-semibold border transition-all duration-150"
@@ -294,8 +296,8 @@ export default function MarketPage() {
 
           <div className="text-xs text-right mb-5" style={{ color: "var(--text-dim)" }}>
             {mode === "supply" && <>Max: {fmt(bal ?? BigInt(0), 4)} {symStr}</>}
-            {mode === "withdraw" && <>Max: {fmt(uDep, 4)} {symStr}</>}
-            {mode === "borrow" && <>Max: {fmt(uCol, 4)} {symStr}</>}
+            {mode === "withdraw" && <>Max: {fmt(uDep > uCol ? uDep - uCol : 0n, 4)} {symStr}</>}
+            {mode === "borrow" && <>Max: {fmt(uDep > uCol ? ((uDep - uCol) * 100n) / 150n : 0n, 4)} {symStr}</>}
             {mode === "repay" && <>Max: {fmt(uBor, 4)} {symStr}</>}
           </div>
 

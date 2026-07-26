@@ -59,8 +59,9 @@ const wagmiConfig = createConfig({
           id: "trustWallet",
           name: "Trust Wallet",
           provider(window) {
-            if (window?.trustwallet) return window.trustwallet
-            return (window as any)?.ethereum?.providers?.find((p: any) => p.isTrustWallet)
+            const w = window as any
+            if (w?.trustwallet) return w.trustwallet
+            return w?.ethereum?.providers?.find((p: any) => p.isTrustWallet)
           },
         }
       },
@@ -71,8 +72,9 @@ const wagmiConfig = createConfig({
           id: "bitgetWallet",
           name: "Bitget Wallet",
           provider(window) {
-            if (window?.bitkeep) return window.bitkeep
-            return (window as any)?.ethereum?.providers?.find((p: any) => p.isBitKeep)
+            const w = window as any
+            if (w?.bitkeep) return w.bitkeep
+            return w?.ethereum?.providers?.find((p: any) => p.isBitKeep)
           },
         }
       },

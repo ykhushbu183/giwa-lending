@@ -35,8 +35,8 @@ A **Dojang-attested** lending & borrowing protocol on **GIWA Sepolia**. Only wal
 | Contract | Address |
 |----------|---------|
 | **DojangScroll** | `0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9` |
-| **GLT Token** | `0xCcB10752990A7508933d2fF509e011f71032073F` |
-| **Lending Pool** | `0x4C62dDcDe751f39Bc0661fCaA9Dc0C7d68dE0eCA` |
+| **GLT Token** | `0x8dcDbfaD3869515f82177Bb491Ae83198d91d807` |
+| **Lending Pool** | `0x808D093E87A3FD286115738BeE9babD8ECEf21b3` |
 
 ### DojangScroll (KYC)
 - `isVerified(address, bytes32 attesterId)` — Check wallet has Upbit Korea KYC attestation
@@ -65,7 +65,7 @@ A **Dojang-attested** lending & borrowing protocol on **GIWA Sepolia**. Only wal
 | Layer | Technology |
 |-------|-----------|
 | Smart Contracts | Solidity 0.8.20 + Foundry |
-| Frontend | React 19 + TypeScript + Vite |
+| Frontend | React 18 + TypeScript + Vite |
 | Web3 | Wagmi v2 + viem |
 | Styling | Tailwind CSS v4 |
 | Data | @tanstack/react-query |

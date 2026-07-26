@@ -1,7 +1,7 @@
 export const GIWA = 91342
 
-export const TOKEN = "0xCcB10752990A7508933d2fF509e011f71032073F"
-export const POOL = "0x4C62dDcDe751f39Bc0661fCaA9Dc0C7d68dE0eCA"
+export const TOKEN = "0x8dcDbfaD3869515f82177Bb491Ae83198d91d807"
+export const POOL = "0x808D093E87A3FD286115738BeE9babD8ECEf21b3"
 export const DOJANG_SCROLL = "0xd5077b67dcb56caC8b270C7788FC3E6ee03F17B9"
 export const UPBIT_ATTESTER = "0xd99b42e778498aa3c9c1f6a012359130252780511687a35982e8e52735453034"
 
@@ -50,9 +50,9 @@ export const DOJANG_ABI = [
 
 export function fmt(v: string | bigint, d = 2, showSign = false) {
   const n = typeof v === "bigint" ? Number(v) / 1e18 : Number(v) / 1e18
-  if (n === 0) return "0"
+  if (n <= 0) return "0"
   if (n < 0.01) return "<0.01"
-  const prefix = showSign && n > 0 ? "+" : ""
+  const prefix = showSign ? "+" : ""
   return prefix + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: d })
 }
 

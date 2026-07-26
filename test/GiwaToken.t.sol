@@ -26,7 +26,8 @@ contract GiwaTokenTest is Test {
         token.mint(50 ether);
 
         vm.prank(alice);
-        token.transfer(bob, 20 ether);
+        bool ok1 = token.transfer(bob, 20 ether);
+        assertTrue(ok1);
 
         assertEq(token.balanceOf(alice), 30 ether);
         assertEq(token.balanceOf(bob), 20 ether);
@@ -40,7 +41,8 @@ contract GiwaTokenTest is Test {
         token.approve(bob, 50 ether);
 
         vm.prank(bob);
-        token.transferFrom(alice, bob, 30 ether);
+        bool ok2 = token.transferFrom(alice, bob, 30 ether);
+        assertTrue(ok2);
 
         assertEq(token.balanceOf(alice), 70 ether);
         assertEq(token.balanceOf(bob), 30 ether);

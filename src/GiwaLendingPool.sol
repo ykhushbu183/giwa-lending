@@ -35,7 +35,7 @@ contract GiwaLendingPool {
 
     function deposit(uint256 amount) external {
         require(amount > 0, "Zero amount");
-        token.transferFrom(msg.sender, address(this), amount);
+        require(token.transferFrom(msg.sender, address(this), amount));
         users[msg.sender].deposits += amount;
         if (users[msg.sender].depositTime == 0) {
             users[msg.sender].depositTime = block.timestamp;
@@ -47,11 +47,16 @@ contract GiwaLendingPool {
     function withdraw(uint256 amount) external {
         UserInfo storage user = users[msg.sender];
         require(user.deposits >= amount, "Insufficient balance");
+        require(user.deposits - amount >= user.collateral, "Undercollateralized");
         uint256 interest = _calculateLendInterest(msg.sender);
         user.deposits -= amount;
         totalDeposits -= amount;
-        if (user.deposits == 0) user.depositTime = 0;
-        token.transfer(msg.sender, amount + interest);
+        if (user.deposits == 0) {
+            user.depositTime = 0;
+        } else {
+            user.depositTime = block.timestamp;
+        }
+        require(token.transfer(msg.sender, amount + interest));
         emit Withdrawn(msg.sender, amount, interest);
     }
 
@@ -59,13 +64,13 @@ contract GiwaLendingPool {
         UserInfo storage user = users[msg.sender];
         require(user.deposits > 0, "Deposit first");
         uint256 requiredCollateral = (amount * COLLATERAL_RATIO) / 100;
-        require(user.deposits >= requiredCollateral, "Insufficient collateral");
+        require(user.deposits >= user.collateral + requiredCollateral, "Insufficient collateral");
 
         user.borrows += amount;
         user.collateral += requiredCollateral;
         if (user.borrowTime == 0) user.borrowTime = block.timestamp;
         totalBorrows += amount;
-        token.transfer(msg.sender, amount);
+        require(token.transfer(msg.sender, amount));
         emit Borrowed(msg.sender, amount);
     }
 
@@ -74,11 +79,15 @@ contract GiwaLendingPool {
         require(user.borrows >= amount, "Exceeds loan");
         uint256 interest = _calculateBorrowInterest(msg.sender);
         uint256 totalDue = amount + interest;
-        token.transferFrom(msg.sender, address(this), totalDue);
+        require(token.transferFrom(msg.sender, address(this), totalDue));
         user.borrows -= amount;
         user.collateral = (user.borrows * COLLATERAL_RATIO) / 100;
         totalBorrows -= amount;
-        if (user.borrows == 0) user.borrowTime = 0;
+        if (user.borrows == 0) {
+            user.borrowTime = 0;
+        } else {
+            user.borrowTime = block.timestamp;
+        }
         emit Repaid(msg.sender, amount, interest);
     }
 
