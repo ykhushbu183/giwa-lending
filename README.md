@@ -1,6 +1,6 @@
 # GiwaLend
 
-A **KYC-gated** lending & borrowing protocol on **GIWA Sepolia**. Only verified wallets can supply GLT (5% APY) and borrow against collateral (10% APR).
+A **Dojang-attested** lending & borrowing protocol on **GIWA Sepolia**. Only wallets with a valid Upbit Korea KYC attestation can supply GLT (5% APY) and borrow against collateral (10% APR).
 
 **Live App:** https://giwalend.vercel.app
 
@@ -53,7 +53,7 @@ A **KYC-gated** lending & borrowing protocol on **GIWA Sepolia**. Only verified 
 ## Features
 
 - **KYC Gating** — Only wallets with a Dojang attestation (Upbit Korea KYC) can access lending/borrowing
-- **Mint GLT** — Public mint, only gas fees
+- **Mint GLT** — Public mint, only gas fees (Dojang-verified wallets only)
 - **Supply** — 5% APY, time-based interest
 - **Borrow** — 10% APR, 150% collateral ratio, max 66% LTV
 - **Wallet Panel** — Address copy, chain switch, ETH/GLT balances

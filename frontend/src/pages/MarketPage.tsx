@@ -75,7 +75,7 @@ export default function MarketPage() {
       <div className="animate-in text-center" style={{ maxWidth: 560, margin: "0 auto", padding: "60px 16px" }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
         <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>GiwaLend</h1>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>KYC-gated lending protocol — connect to verify</p>
+        <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>Dojang-attested lending protocol — connect to verify</p>
         <button onClick={() => window.dispatchEvent(new CustomEvent("open-wallet-modal"))}
           style={{ padding: "12px 28px", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)" }}>
           Connect Wallet
@@ -225,7 +225,7 @@ export default function MarketPage() {
         </div>
         <div style={{ padding: "0 18px 6px" }}>
           <p style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
-            GLT is a test ERC20 token with a <strong>public mint function</strong> — only KYC-verified users can mint.
+            GLT is a test ERC20 token with a <strong>public mint function</strong> — only Dojang-verified users can mint.
             No faucet, no real value. Only GIWA Sepolia gas fees apply.
           </p>
         </div>

@@ -56,8 +56,8 @@ function AboutSection() {
         </h2>
         <div className="space-y-6 text-base leading-relaxed text-center" style={{ color: "var(--text-muted)" }}>
           <p className="text-lg">
-            GiwaLend is a <strong className="font-medium" style={{ color: "var(--text-secondary)" }}>KYC-gated lending protocol</strong> built on GIWA Chain.
-            Only verified users can supply GLT tokens to earn interest, or borrow against their supplied collateral.
+            GiwaLend uses <strong className="font-medium" style={{ color: "var(--text-secondary)" }}>Dojang attestations</strong> for identity verification on GIWA Chain.
+            Only wallets with a valid Upbit Korea KYC attestation can supply GLT tokens to earn interest, or borrow against their supplied collateral.
           </p>
           <p className="text-lg">
             Built for GASOK 2026, it&apos;s a fully functional lending market with real-time interest accrual,
@@ -65,7 +65,7 @@ function AboutSection() {
           </p>
           <p className="text-lg">
             The protocol uses a single-asset pool model — supply GLT, earn 5% APY.
-            Borrow GLT at 10% APR with a 150% collateral ratio.
+            Borrow GLT at 10% APR with a 150% collateral ratio. Only Dojang-verified wallets can interact.
           </p>
         </div>
       </div>
@@ -75,7 +75,7 @@ function AboutSection() {
 
 function HowItWorksSection() {
   const steps = [
-    { num: "01", title: "Connect & Verify", desc: "Link your wallet to GiwaLend. Only KYC-verified wallets on the registry can access the protocol — unverified addresses are restricted." },
+    { num: "01", title: "Connect & Verify", desc: "Link your wallet to GiwaLend. Only Dojang-verified wallets can access the protocol — unverified addresses are restricted." },
     { num: "02", title: "Mint GLT (Test Token)", desc: "GLT is a publicly mintable test ERC20 token — no faucet, no real value. Just enter an amount and mint directly in the app. It costs only GIWA Sepolia gas (~0 ETH)." },
     { num: "03", title: "Supply & Earn", desc: "Deposit GLT into the lending pool to start earning 5% APY. Your supplied amount becomes collateral." },
     { num: "04", title: "Borrow Against Collateral", desc: "Use up to 66% of your supplied value as collateral to borrow GLT at 10% APR." },
@@ -104,7 +104,7 @@ function FeaturesSection() {
   const features = [
     {
       title: "Supply",
-      desc: "Deposit GLT into the pool and earn 5% APY. Your supply is used as collateral for borrowing. KYC verification required.",
+      desc: "Deposit GLT into the pool and earn 5% APY. Your supply is used as collateral for borrowing. Dojang attestation required.",
       to: "/market",
       accent: "var(--accent-green)",
       bg: "var(--accent-green-soft)",
@@ -116,7 +116,7 @@ function FeaturesSection() {
     },
     {
       title: "Borrow",
-      desc: "Borrow GLT against your supplied collateral at 10% APR. Maintain a healthy >150% collateral ratio. KYC verification required.",
+      desc: "Borrow GLT against your supplied collateral at 10% APR. Maintain a healthy >150% collateral ratio. Dojang attestation required.",
       to: "/market",
       accent: "var(--accent-yellow)",
       bg: "var(--accent-yellow-soft)",
@@ -172,7 +172,7 @@ function FeaturesSection() {
 function BenefitsSection() {
   const items = [
     {
-      title: "KYC-Gated Access",
+      title: "Dojang-Attested Access",
       desc: "Only wallets with a Dojang attestation from Upbit Korea KYC can lend and borrow. Unverified addresses are automatically blocked.",
       svg: (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -245,7 +245,7 @@ function CtaSection({ onConnect, isConnected }: { onConnect: () => void; isConne
           Ready to get started?
         </h2>
         <p className="text-base mb-8 max-w-sm mx-auto" style={{ color: "var(--text-muted)" }}>
-          Connect your KYC-verified wallet to start lending and borrowing on GIWA Chain.
+          Connect your Dojang-verified wallet to start lending and borrowing on GIWA Chain.
         </p>
         {isConnected ? (
           <NavLink to="/market" className="btn-primary px-8 py-3.5 rounded-xl text-base font-semibold no-underline">
@@ -270,7 +270,7 @@ function FooterSection() {
         <a href="https://sepolia-explorer.giwa.io" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text-accent)" }} className="hover:underline">Explorer</a>
       </p>
       <p className="text-[0.65rem]" style={{ color: "var(--text-dim)" }}>
-        KYC-gated lending protocol built for GASOK 2026. Not affiliated with GIWA or Upbit.
+        Dojang-attested lending protocol built for GASOK 2026. Not affiliated with GIWA or Upbit.
       </p>
     </footer>
   )
