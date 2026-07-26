@@ -289,6 +289,7 @@ export default function Home({ onConnectRequest }: { onConnectRequest: () => voi
       <BenefitsSection />
       <CtaSection onConnect={onConnectRequest} isConnected={isConnected} />
       <FooterSection />
-    </div>
+      </div>
+    </>
   )
 }
