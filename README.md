@@ -25,8 +25,8 @@ A **Dojang-attested** lending & borrowing protocol on **GIWA Sepolia**. Only wal
 └───────────────────────┬────────────────────────┘
                         │
 ┌─ GIWA Sepolia (91342) ▼────────────────────────┐
-│  GLT Token:    0xCcB1...                      │
-│  Lending Pool: 0x4C62...                      │
+│  GLT Token:    0x8dcD...                      │
+│  Lending Pool: 0x808D...                      │
 └────────────────────────────────────────────────┘
 ```
 
