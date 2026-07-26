@@ -20,6 +20,26 @@ function Spinner() {
   )
 }
 
+function ActionBtn({ children, onClick, color, action, loadingAction }: {
+  children: React.ReactNode; onClick: () => void; color: string; action: string; loadingAction: string
+}) {
+  const active = loadingAction === action
+  return (
+    <button disabled={!!loadingAction} onClick={onClick}
+      className="w-full py-3 rounded-xl text-sm font-semibold border-none flex items-center justify-center gap-2 transition-all duration-150"
+      style={{
+        background: color, color: "#000",
+        opacity: loadingAction && loadingAction !== action ? 0.4 : active ? 0.8 : 1,
+        cursor: loadingAction ? "not-allowed" : "pointer",
+      }}
+      onMouseEnter={e => { if (!loadingAction) e.currentTarget.style.opacity = "0.85" }}
+      onMouseLeave={e => { if (!loadingAction) e.currentTarget.style.opacity = "1" }}>
+      {active && <Spinner />}
+      {children}
+    </button>
+  )
+}
+
 export default function MarketPage() {
   const { address, chainId } = useAccount()
   const [mode, setMode] = useState<Act>("supply")
@@ -55,9 +75,7 @@ export default function MarketPage() {
     }
   }
 
-  function resetToast() {
-    toastId.current = 0
-  }
+  function resetToast() { toastId.current = 0 }
 
   async function execTx(config: any, pendingLabel: string, successLabel: string) {
     try {
@@ -105,8 +123,7 @@ export default function MarketPage() {
   }
 
   async function handleWithdraw() {
-    const amount = toB(amt)
-    if (amount <= BigInt(0)) return false
+    const amount = toB(amt); if (amount <= BigInt(0)) return false
     return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "withdraw", args: [amount] },
       `Withdrawing ${fmt(amount, 2)} ${symStr}...`,
@@ -115,8 +132,7 @@ export default function MarketPage() {
   }
 
   async function handleBorrow() {
-    const amount = toB(amt)
-    if (amount <= BigInt(0)) return false
+    const amount = toB(amt); if (amount <= BigInt(0)) return false
     return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "borrow", args: [amount] },
       `Borrowing ${fmt(amount, 2)} ${symStr}...`,
@@ -143,8 +159,7 @@ export default function MarketPage() {
   }
 
   async function handleMint() {
-    const amount = toB(mint)
-    if (amount <= BigInt(0)) return false
+    const amount = toB(mint); if (amount <= BigInt(0)) return false
     return await execTx(
       { address: TOKEN, abi: TOKEN_ABI, functionName: "mint", args: [amount] },
       `Minting ${fmt(amount, 2)} ${symStr}...`,
@@ -154,30 +169,26 @@ export default function MarketPage() {
 
   const ok = chainId === GIWA
 
-  function Btn({ children, onClick, color, action }: { children: React.ReactNode; onClick: () => void; color: string; action: string }) {
-    const active = loadingAction === action
-    return (
-      <button disabled={!!loadingAction} onClick={onClick}
-        className="w-full rounded-lg border-none text-sm font-semibold flex items-center justify-center gap-2"
-        style={{ padding: "11px 0", background: color, color: "#000", opacity: loadingAction ? 0.6 : 1, cursor: loadingAction ? "not-allowed" : "pointer" }}>
-        {active && <Spinner />}
-        {children}
-      </button>
-    )
-  }
-
   if (!address) {
     return (
-      <div className="animate-in text-center" style={{ maxWidth: 560, margin: "0 auto", padding: "60px 16px" }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
-        <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>GiwaLend</h1>
-        <p style={{ color: "var(--text-secondary)", marginBottom: 24, fontSize: 14 }}>Dojang-attested lending protocol — connect to verify</p>
-        <button onClick={() => window.dispatchEvent(new CustomEvent("open-wallet-modal"))}
-          style={{ padding: "12px 28px", borderRadius: 8, border: "none", fontSize: 14, fontWeight: 600, background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)" }}>
-          Connect Wallet
-        </button>
-        <div className="flex justify-center gap-5 mt-7 text-xs" style={{ color: "var(--text-secondary)" }}>
-          <span>1. Connect</span><span style={{ color: "var(--text-dim)" }}>→</span><span>2. Mint GLT</span><span style={{ color: "var(--text-dim)" }}>→</span><span>3. Supply</span><span style={{ color: "var(--text-dim)" }}>→</span><span>4. Borrow</span>
+      <div className="animate-in px-6 md:px-12 lg:px-20" style={{ paddingTop: 80, paddingBottom: 80 }}>
+        <div className="max-w-lg mx-auto text-center" style={{ paddingTop: 60, paddingBottom: 60 }}>
+          <div className="w-16 h-16 mx-auto mb-8 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-accent-soft)" }}>
+            <span style={{ fontSize: 28 }}>🏦</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-4" style={{ color: "var(--text-primary)" }}>GiwaLend</h1>
+          <p className="text-base mb-8" style={{ color: "var(--text-secondary)" }}>Dojang-attested lending protocol — connect to verify</p>
+          <button onClick={() => window.dispatchEvent(new CustomEvent("open-wallet-modal"))}
+            className="btn-primary px-8 py-3.5 rounded-xl text-base font-semibold border-none"
+            style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-text)" }}>
+            Connect Wallet
+          </button>
+          <div className="flex justify-center gap-4 mt-10 text-xs" style={{ color: "var(--text-secondary)" }}>
+            <span>1. Connect</span><span style={{ color: "var(--text-dim)" }}>→</span>
+            <span>2. Mint GLT</span><span style={{ color: "var(--text-dim)" }}>→</span>
+            <span>3. Supply</span><span style={{ color: "var(--text-dim)" }}>→</span>
+            <span>4. Borrow</span>
+          </div>
         </div>
       </div>
     )
@@ -185,153 +196,156 @@ export default function MarketPage() {
 
   if (!ok) {
     return (
-      <div className="animate-in" style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
-        <div className="card text-center" style={{ padding: 24, borderColor: "var(--accent-yellow)" }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>⚠️</div>
-          <div style={{ fontWeight: 600, marginBottom: 4, color: "var(--accent-yellow)" }}>Wrong Network</div>
-          <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 12 }}>Switch to GIWA Sepolia (Chain ID: 91342)</div>
-          <button onClick={async () => {
-            try {
-              await switchChain({ chainId: GIWA })
-            } catch (e: any) {
-              if (e?.code === 4902) {
-                try {
-                  await (window as any).ethereum?.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x" + GIWA.toString(16), chainName: "GIWA Sepolia", rpcUrls: ["https://sepolia-rpc.giwa.io"], nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, blockExplorerUrls: ["https://sepolia-explorer.giwa.io"] }] })
-                } catch {}
+      <div className="animate-in px-6 md:px-12 lg:px-20" style={{ paddingTop: 60, paddingBottom: 60 }}>
+        <div className="max-w-lg mx-auto">
+          <div className="card text-center p-8" style={{ borderColor: "var(--accent-yellow)" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>⚠️</div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--accent-yellow)" }}>Wrong Network</h2>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>Switch to GIWA Sepolia (Chain ID: 91342)</p>
+            <button onClick={async () => {
+              try { await switchChain({ chainId: GIWA }) } catch (e: any) {
+                if (e?.code === 4902) {
+                  try { await (window as any).ethereum?.request({ method: "wallet_addEthereumChain", params: [{ chainId: "0x" + GIWA.toString(16), chainName: "GIWA Sepolia", rpcUrls: ["https://sepolia-rpc.giwa.io"], nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, blockExplorerUrls: ["https://sepolia-explorer.giwa.io"] }] }) } catch {}
+                }
               }
-            }
-          }}
-            style={{ padding: "10px 20px", borderRadius: 8, border: "none", fontSize: 13, fontWeight: 600, background: "var(--accent-yellow)", color: "#000" }}>
-            Add / Switch GIWA Sepolia
-          </button>
+            }}
+              className="px-6 py-3 rounded-xl text-sm font-semibold border-none"
+              style={{ background: "var(--accent-yellow)", color: "#000" }}>
+              Add / Switch GIWA Sepolia
+            </button>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="animate-in" style={{ maxWidth: 560, margin: "0 auto", padding: "32px 16px" }}>
+    <div className="animate-in px-6 md:px-12 lg:px-20" style={{ paddingTop: 40, paddingBottom: 80 }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div className="flex items-center gap-2">
-            <span style={{ fontSize: 24 }}>🪙</span>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{symStr}</div>
-              <div style={{ fontSize: 11, color: "var(--text-dim)", fontFamily: "monospace" }}>GIWA Sepolia</div>
-            </div>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>Balance</div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{fmt(bal ?? BigInt(0), 2)}</div>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-3" style={{ padding: 16 }}>
-          {[
-            { l: "Supply APY", v: "5%", c: "var(--accent-green)" },
-            { l: "Borrow APR", v: "10%", c: "var(--accent-yellow)" },
-            { l: "Utilization", v: `${util.toString()}%`, c: "var(--text-primary)" },
-          ].map(x => (
-            <div key={x.l} style={{ textAlign: "center", padding: "8px 0" }}>
-              <div className="card-badge" style={{ marginBottom: 4, display: "block" }}>{x.l}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: x.c }}>{x.v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <div className="max-w-3xl mx-auto">
+        <div className="eyebrow mb-4">Market</div>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-10" style={{ color: "var(--text-primary)" }}>
+          Lend & Borrow
+        </h1>
 
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ padding: "16px 18px", borderBottom: "1px solid var(--border-card)" }}>
-          <div className="flex gap-1 p-0.5 rounded-lg"
-            style={{ background: "var(--bg-accent-soft)" }}>
+        <div className="card p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: "var(--bg-accent-soft)" }}>
+                <span style={{ fontSize: 22 }}>🪙</span>
+              </div>
+              <div>
+                <div className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>{symStr}</div>
+                <div className="eyebrow">GIWA Sepolia</div>
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div className="eyebrow mb-1">Balance</div>
+              <div className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{fmt(bal ?? BigInt(0), 4)}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[
+              { l: "Supply APY", v: "5%", c: "var(--accent-green)" },
+              { l: "Borrow APR", v: "10%", c: "var(--accent-yellow)" },
+              { l: "Utilization", v: `${util.toString()}%`, c: "var(--text-primary)" },
+            ].map(x => (
+              <div key={x.l} className="text-center py-3" style={{ background: "var(--bg-accent-soft)", borderRadius: 10 }}>
+                <div className="card-badge mb-1">{x.l}</div>
+                <div className="text-xl font-bold" style={{ color: x.c }}>{x.v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card p-8 mb-8">
+          <div className="flex gap-2 p-1 rounded-xl mb-6" style={{ background: "var(--bg-accent-soft)" }}>
             {(["supply", "withdraw", "borrow", "repay"] as const).map(m => (
               <button key={m} onClick={() => { setMode(m); setAmt("") }}
+                className="flex-1 py-2 rounded-lg text-sm font-medium border-none transition-all duration-150"
                 style={{
-                  flex: 1, padding: "6px 0", borderRadius: 6, border: "none", fontSize: 12, fontWeight: 500,
                   background: mode === m ? "var(--bg-card)" : "transparent",
                   color: mode === m ? (m === "supply" || m === "repay" ? "var(--accent-green)" : "var(--accent-yellow)") : "var(--text-secondary)",
-                  transition: "all .15s",
                 }}>
                 {m.charAt(0).toUpperCase() + m.slice(1)}
               </button>
             ))}
           </div>
-        </div>
-        <div style={{ padding: "16px 18px" }}>
-          <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 10 }}>
-            {mode === "supply" && <>Supply <strong>{symStr}</strong> to earn <strong style={{ color: "var(--accent-green)" }}>5% APY</strong></>}
-            {mode === "withdraw" && <>Withdraw <strong>{symStr}</strong> · Supplied: <strong>{fmt(uDep, 2)}</strong></>}
-            {mode === "borrow" && <>Borrow <strong>{symStr}</strong> at <strong style={{ color: "var(--accent-yellow)" }}>10% APR</strong> · Max: <strong>{fmt(uCol, 2)}</strong></>}
-            {mode === "repay" && <>Repay <strong>{symStr}</strong> · Borrowed: <strong>{fmt(uBor, 2)}</strong></>}
+
+          <div className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+            {mode === "supply" && <>Supply <strong style={{ color: "var(--text-primary)" }}>{symStr}</strong> to earn <strong style={{ color: "var(--accent-green)" }}>5% APY</strong></>}
+            {mode === "withdraw" && <>Withdraw <strong style={{ color: "var(--text-primary)" }}>{symStr}</strong> · Supplied: <strong>{fmt(uDep, 4)}</strong></>}
+            {mode === "borrow" && <>Borrow <strong style={{ color: "var(--text-primary)" }}>{symStr}</strong> at <strong style={{ color: "var(--accent-yellow)" }}>10% APR</strong></>}
+            {mode === "repay" && <>Repay <strong style={{ color: "var(--text-primary)" }}>{symStr}</strong> · Borrowed: <strong>{fmt(uBor, 4)}</strong></>}
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex gap-3 mb-3">
             <input value={amt} onChange={e => setAmt(e.target.value)} placeholder="0.00"
-              style={{ flex: 1, padding: "10px 14px", borderRadius: 8, fontSize: 14 }} />
+              className="flex-1 px-4 py-3 rounded-xl text-base border"
+              style={{ background: "var(--bg-input)", borderColor: "var(--border-input)", color: "var(--text-input)" }} />
             <button onClick={() => {
               const v = mode === "supply" ? (bal ?? BigInt(0)) : mode === "withdraw" ? uDep : mode === "borrow" ? uCol : uBor
               setAmt(fmt(v, 6))
             }}
-              style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-card)", background: "transparent", color: "var(--text-secondary)", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
+              className="px-4 rounded-xl text-xs font-semibold border transition-all duration-150"
+              style={{ borderColor: "var(--border-card)", background: "transparent", color: "var(--text-secondary)" }}>
               MAX
             </button>
           </div>
-          <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 6, textAlign: "right" }}>
+
+          <div className="text-xs text-right mb-5" style={{ color: "var(--text-dim)" }}>
             {mode === "supply" && <>Max: {fmt(bal ?? BigInt(0), 4)} {symStr}</>}
             {mode === "withdraw" && <>Max: {fmt(uDep, 4)} {symStr}</>}
             {mode === "borrow" && <>Max: {fmt(uCol, 4)} {symStr}</>}
             {mode === "repay" && <>Max: {fmt(uBor, 4)} {symStr}</>}
           </div>
-          <div style={{ marginTop: 12 }}>
-            {mode === "supply" && (
-              <Btn onClick={() => run("supply", handleSupply)} color="var(--accent-green)" action="supply">
-                Supply {symStr}
-              </Btn>
-            )}
-            {mode === "withdraw" && (
-              <Btn onClick={() => run("withdraw", handleWithdraw)} color="var(--accent-yellow)" action="withdraw">
-                Withdraw {symStr}
-              </Btn>
-            )}
-            {mode === "borrow" && (
-              <Btn onClick={() => run("borrow", handleBorrow)} color="var(--accent-yellow)" action="borrow">
-                Borrow {symStr}
-              </Btn>
-            )}
-            {mode === "repay" && (
-              <Btn onClick={() => run("repay", handleRepay)} color="var(--accent-green)" action="repay">
-                Repay {symStr}
-              </Btn>
-            )}
-          </div>
-        </div>
-      </div>
 
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Get GLT Tokens</span>
-          <span className="card-badge">Step 1</span>
+          {mode === "supply" && (
+            <ActionBtn onClick={() => run("supply", handleSupply)} color="var(--accent-green)" action="supply" loadingAction={loadingAction}>
+              Supply {symStr}
+            </ActionBtn>
+          )}
+          {mode === "withdraw" && (
+            <ActionBtn onClick={() => run("withdraw", handleWithdraw)} color="var(--accent-yellow)" action="withdraw" loadingAction={loadingAction}>
+              Withdraw {symStr}
+            </ActionBtn>
+          )}
+          {mode === "borrow" && (
+            <ActionBtn onClick={() => run("borrow", handleBorrow)} color="var(--accent-yellow)" action="borrow" loadingAction={loadingAction}>
+              Borrow {symStr}
+            </ActionBtn>
+          )}
+          {mode === "repay" && (
+            <ActionBtn onClick={() => run("repay", handleRepay)} color="var(--accent-green)" action="repay" loadingAction={loadingAction}>
+              Repay {symStr}
+            </ActionBtn>
+          )}
         </div>
-        <div style={{ padding: "0 18px 6px" }}>
-          <p style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.5, margin: 0 }}>
-            GLT is a test ERC20 token with a <strong>public mint function</strong> — only Dojang-verified users can mint.
+
+        <div className="card p-8 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Get GLT Tokens</h2>
+            <span className="card-badge">Step 1</span>
+          </div>
+          <p className="text-sm mb-5" style={{ color: "var(--text-secondary)", lineHeight: 1.7 }}>
+            GLT is a test ERC20 token with a public mint function — only Dojang-verified users can mint.
             No faucet, no real value. Only GIWA Sepolia gas fees apply.
           </p>
+          <div className="flex gap-3 items-center">
+            <input value={mint} onChange={e => setMint(e.target.value)}
+              className="px-4 py-3 rounded-xl text-base border"
+              style={{ width: 120, background: "var(--bg-input)", borderColor: "var(--border-input)", color: "var(--text-input)", textAlign: "center" }} />
+            <ActionBtn onClick={() => run("mint", handleMint)} color="var(--btn-primary-bg)" action="mint" loadingAction={loadingAction}>
+              Mint {symStr}
+            </ActionBtn>
+          </div>
         </div>
-        <div style={{ padding: "6px 18px 14px", display: "flex", gap: 8, alignItems: "center" }}>
-          <input value={mint} onChange={e => setMint(e.target.value)}
-            style={{ width: 100, padding: "10px 14px", borderRadius: 8, fontSize: 14, textAlign: "center" }} />
-          <Btn onClick={() => run("mint", handleMint)} color="var(--btn-primary-bg)" action="mint">
-            Mint {symStr}
-          </Btn>
-        </div>
-      </div>
 
-      <div className="card">
-        <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border-card)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>Your Position</span>
-          <span style={{ fontSize: 11, color: h.color, fontWeight: 500, fontFamily: "monospace" }}>{h.label}</span>
-        </div>
-        <div style={{ padding: "14px 18px" }}>
+        <div className="card p-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>Your Position</h2>
+            <span className="text-sm font-mono font-semibold" style={{ color: h.color }}>{h.label}</span>
+          </div>
           {[
             { l: "Supplied", v: fmt(uDep, 4), c: "var(--text-primary)" },
             { l: "Interest Earned", v: `+${fmt(lInt, 4)}`, c: "var(--accent-green)" },
@@ -339,20 +353,19 @@ export default function MarketPage() {
             { l: "Interest Owing", v: `-${fmt(bInt, 4)}`, c: "var(--accent-red)" },
             { l: "Collateral", v: fmt(uCol, 4), c: "var(--text-primary)" },
           ].map(x => (
-            <div key={x.l} className="flex justify-between py-1.5 text-sm"
-              style={{ borderBottom: "1px solid var(--border-card)" }}>
+            <div key={x.l} className="flex justify-between py-2.5 text-sm border-b"
+              style={{ borderColor: "var(--border-card)" }}>
               <span style={{ color: "var(--text-secondary)" }}>{x.l}</span>
-              <span style={{ fontWeight: 600, color: x.c }}>{x.v}</span>
+              <span className="font-semibold" style={{ color: x.c }}>{x.v}</span>
             </div>
           ))}
-          <div style={{ marginTop: 12 }}>
-            <div className="flex justify-between text-xs mb-1">
+          <div className="mt-5">
+            <div className="flex justify-between text-xs mb-2">
               <span style={{ color: "var(--text-secondary)" }}>Health Factor</span>
-              <span style={{ color: h.color, fontWeight: 600 }}>{h.pct}%</span>
+              <span className="font-semibold" style={{ color: h.color }}>{h.pct}%</span>
             </div>
-            <div className="h-1 rounded-full overflow-hidden"
-              style={{ background: "var(--bg-accent-soft)" }}>
-              <div style={{ height: "100%", borderRadius: 2, width: `${h.pct}%`, background: h.color, transition: "width .5s" }} />
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--bg-accent-soft)" }}>
+              <div style={{ height: "100%", borderRadius: 2, width: `${h.pct}%`, background: h.color, transition: "width 0.5s" }} />
             </div>
           </div>
         </div>
