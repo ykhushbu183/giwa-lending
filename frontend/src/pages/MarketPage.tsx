@@ -30,12 +30,13 @@ export default function MarketPage() {
   const { writeContractAsync } = useWriteContract()
   const toastId = useRef(0)
 
-  const { data: sym } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "symbol", query: { enabled: !!address } })
-  const { data: bal } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "balanceOf", args: [address!], query: { enabled: !!address } })
-  const { data: allow } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "allowance", args: [address!, POOL], query: { enabled: !!address } })
-  const { data: tDep } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "totalDeposits", query: { enabled: !!address } })
-  const { data: tBor } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "totalBorrows", query: { enabled: !!address } })
-  const { data: userInfo } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "getUserInfo", args: [address!], query: { enabled: !!address } })
+  const POLL = { refetchInterval: 3000 }
+  const { data: sym } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "symbol", query: { enabled: !!address, ...POLL } })
+  const { data: bal } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "balanceOf", args: [address!], query: { enabled: !!address, ...POLL } })
+  const { data: allow } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "allowance", args: [address!, POOL], query: { enabled: !!address, ...POLL } })
+  const { data: tDep } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "totalDeposits", query: { enabled: !!address, ...POLL } })
+  const { data: tBor } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "totalBorrows", query: { enabled: !!address, ...POLL } })
+  const { data: userInfo } = useReadContract({ address: POOL, abi: POOL_ABI, functionName: "getUserInfo", args: [address!], query: { enabled: !!address, ...POLL } })
 
   const uDep = userInfo?.[0] ?? BigInt(0)
   const uBor = userInfo?.[1] ?? BigInt(0)
@@ -273,6 +274,12 @@ export default function MarketPage() {
               style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid var(--border-card)", background: "transparent", color: "var(--text-secondary)", fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>
               MAX
             </button>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-dim)", marginTop: 6, textAlign: "right" }}>
+            {mode === "supply" && <>Max: {fmt(bal ?? BigInt(0), 4)} {symStr}</>}
+            {mode === "withdraw" && <>Max: {fmt(uDep, 4)} {symStr}</>}
+            {mode === "borrow" && <>Max: {fmt(uCol, 4)} {symStr}</>}
+            {mode === "repay" && <>Max: {fmt(uBor, 4)} {symStr}</>}
           </div>
           <div style={{ marginTop: 12 }}>
             {mode === "supply" && (
