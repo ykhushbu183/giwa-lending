@@ -22,9 +22,9 @@ function HeroSection({ onConnect, isConnected }: { onConnect: () => void; isConn
           <span style={{ color: "var(--text-accent)" }}>on GIWA Chain</span>
         </h1>
         <p className="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed mb-10" style={{ color: "var(--text-muted)" }}>
-          GiwaLend is a <strong>KYC-gated lending protocol</strong> built on GIWA Chain.
-          Only verified users can supply GLT to earn 5% APY, borrow against collateral at 10% APR,
-          and manage their position in real time.
+          GiwaLend uses <strong>Dojang attestations</strong> to verify user identities on GIWA Chain.
+          Only wallets with a valid Upbit Korea KYC attestation can supply GLT to earn 5% APY,
+          borrow against collateral at 10% APR, and manage their position in real time.
         </p>
         <div className="flex items-center justify-center gap-4">
           {isConnected ? (
