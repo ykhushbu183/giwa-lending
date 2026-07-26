@@ -18,6 +18,11 @@ export function toast(message: string, type: ToastType, txHash?: string): number
   return id
 }
 
+export function updateToast(id: number, message: string, type: ToastType, txHash?: string) {
+  const item: ToastItem = { id, message, type, txHash }
+  listeners.forEach(fn => fn(item))
+}
+
 export function dismissToast(id: number) {
   dismissListeners.forEach(fn => fn(id))
 }
@@ -38,7 +43,7 @@ export default function ToastContainer() {
     if (item.type !== "pending") {
       setTimeout(() => {
         setItems(prev => prev.filter(i => i.id !== item.id))
-      }, 5000)
+      }, 3000)
     }
   }, [])
 

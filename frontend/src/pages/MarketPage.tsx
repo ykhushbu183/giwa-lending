@@ -1,8 +1,8 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useAccount, useReadContract, useWriteContract, useSwitchChain } from "wagmi"
 import { createPublicClient, http } from "viem"
 import { GIWA, GIWA_CHAIN, TOKEN, POOL, TOKEN_ABI, POOL_ABI, fmt, toB, calcHealth } from "../config"
-import { toast } from "../components/Toast"
+import { toast, updateToast } from "../components/Toast"
 
 type Act = "supply" | "withdraw" | "borrow" | "repay"
 
@@ -20,28 +20,15 @@ function Spinner() {
   )
 }
 
-function ActionBtn({ children, onClick, color, loading }: {
-  children: React.ReactNode; onClick: () => void; color: string; loading?: boolean
-}) {
-  return (
-    <button disabled={loading} onClick={onClick}
-      className="w-full rounded-lg border-none text-sm font-semibold flex items-center justify-center gap-2"
-      style={{ padding: "11px 0", background: color, color: "#000", opacity: loading ? 0.6 : 1, cursor: loading ? "not-allowed" : "pointer" }}>
-      {loading && <Spinner />}
-      {children}
-    </button>
-  )
-}
-
 export default function MarketPage() {
   const { address, chainId } = useAccount()
   const [mode, setMode] = useState<Act>("supply")
   const [amt, setAmt] = useState("")
   const [mint, setMint] = useState("100")
-  const [loading, setLoading] = useState(false)
-  const [loadingLabel, setLoadingLabel] = useState("")
+  const [loadingAction, setLoadingAction] = useState("")
   const { switchChain } = useSwitchChain()
   const { writeContractAsync } = useWriteContract()
+  const toastId = useRef(0)
 
   const { data: sym } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "symbol", query: { enabled: !!address } })
   const { data: bal } = useReadContract({ address: TOKEN, abi: TOKEN_ABI, functionName: "balanceOf", args: [address!], query: { enabled: !!address } })
@@ -57,53 +44,59 @@ export default function MarketPage() {
   const bInt = userInfo?.[4] ?? BigInt(0)
   const util = tDep === BigInt(0) ? BigInt(0) : (tBor ?? BigInt(0)) * BigInt(100) / (tDep ?? BigInt(1))
   const h = calcHealth(uDep, uBor)
-  const na = allow !== undefined && amt ? BigInt(allow.toString()) < toB(amt) : true
   const symStr = typeof sym === "string" ? sym : "GLT"
 
-  async function execTx(config: any, pendingLabel: string, successLabel: string) {
-    setLoadingLabel(pendingLabel)
-    try {
-      const hash = await writeContractAsync(config)
-      toast(`${pendingLabel}`, "pending")
-      const receipt = await GIWA_CLIENT.waitForTransactionReceipt({ hash })
-      if (receipt.status === "reverted") {
-        toast(`Transaction reverted on-chain`, "error")
-        throw new Error("reverted")
-      }
-      toast(`${successLabel}`, "success", hash)
-    } catch (e: any) {
-      const m = e?.shortMessage || e?.message || ""
-      const isRejected = m.includes("denied") || m.includes("rejected")
-      if (isRejected) {
-        toast(`Transaction cancelled`, "error")
-      } else if (e?.message !== "reverted") {
-        toast(`Transaction failed`, "error")
-      }
-      throw e
+  function showToast(message: string, type: "pending" | "success" | "error", txHash?: string) {
+    if (toastId.current) {
+      updateToast(toastId.current, message, type, txHash)
+    } else {
+      toastId.current = toast(message, type, txHash)
     }
   }
 
-  async function run(action: string, fn: () => Promise<void>) {
-    setLoading(true)
+  function resetToast() {
+    toastId.current = 0
+  }
+
+  async function execTx(config: any, pendingLabel: string, successLabel: string) {
     try {
-      await fn()
-    } finally {
-      setLoading(false)
-      setLoadingLabel("")
+      const hash = await writeContractAsync(config)
+      showToast(pendingLabel, "pending")
+      const receipt = await GIWA_CLIENT.waitForTransactionReceipt({ hash })
+      if (receipt.status === "reverted") {
+        showToast("Transaction reverted on-chain", "error")
+        return false
+      }
+      showToast(successLabel, "success", hash)
+      return true
+    } catch (e: any) {
+      const m = e?.shortMessage || e?.message || ""
+      const isRejected = m.includes("denied") || m.includes("rejected")
+      showToast(isRejected ? "Transaction cancelled" : "Transaction failed", "error")
+      return false
     }
+  }
+
+  async function run(action: string, fn: () => Promise<boolean>) {
+    setLoadingAction(action)
+    resetToast()
+    const ok = await fn()
+    setLoadingAction("")
+    if (ok) resetToast()
   }
 
   async function handleSupply() {
     const amount = toB(amt)
-    if (amount <= BigInt(0)) return
-    if (na) {
-      await execTx(
+    if (amount <= BigInt(0)) return false
+    if (allow !== undefined && BigInt(allow.toString()) < amount) {
+      const approved = await execTx(
         { address: TOKEN, abi: TOKEN_ABI, functionName: "approve", args: [POOL, amount] },
         `Approving ${fmt(amount, 2)} ${symStr}...`,
         `${fmt(amount, 2)} ${symStr} approved!`
       )
+      if (!approved) return false
     }
-    await execTx(
+    return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "deposit", args: [amount] },
       `Supplying ${fmt(amount, 2)} ${symStr}...`,
       `${fmt(amount, 2)} ${symStr} supplied!`
@@ -112,8 +105,8 @@ export default function MarketPage() {
 
   async function handleWithdraw() {
     const amount = toB(amt)
-    if (amount <= BigInt(0)) return
-    await execTx(
+    if (amount <= BigInt(0)) return false
+    return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "withdraw", args: [amount] },
       `Withdrawing ${fmt(amount, 2)} ${symStr}...`,
       `${fmt(amount, 2)} ${symStr} withdrawn!`
@@ -122,8 +115,8 @@ export default function MarketPage() {
 
   async function handleBorrow() {
     const amount = toB(amt)
-    if (amount <= BigInt(0)) return
-    await execTx(
+    if (amount <= BigInt(0)) return false
+    return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "borrow", args: [amount] },
       `Borrowing ${fmt(amount, 2)} ${symStr}...`,
       `${fmt(amount, 2)} ${symStr} borrowed!`
@@ -132,15 +125,16 @@ export default function MarketPage() {
 
   async function handleRepay() {
     const amount = toB(amt)
-    if (amount <= BigInt(0)) return
+    if (amount <= BigInt(0)) return false
     if (allow !== undefined && BigInt(allow.toString()) < amount) {
-      await execTx(
+      const approved = await execTx(
         { address: TOKEN, abi: TOKEN_ABI, functionName: "approve", args: [POOL, amount] },
         `Approving ${fmt(amount, 2)} ${symStr}...`,
         `${fmt(amount, 2)} ${symStr} approved!`
       )
+      if (!approved) return false
     }
-    await execTx(
+    return await execTx(
       { address: POOL, abi: POOL_ABI, functionName: "repay", args: [amount] },
       `Repaying ${fmt(amount, 2)} ${symStr}...`,
       `${fmt(amount, 2)} ${symStr} repaid!`
@@ -149,8 +143,8 @@ export default function MarketPage() {
 
   async function handleMint() {
     const amount = toB(mint)
-    if (amount <= BigInt(0)) return
-    await execTx(
+    if (amount <= BigInt(0)) return false
+    return await execTx(
       { address: TOKEN, abi: TOKEN_ABI, functionName: "mint", args: [amount] },
       `Minting ${fmt(amount, 2)} ${symStr}...`,
       `${fmt(amount, 2)} ${symStr} minted!`
@@ -158,6 +152,18 @@ export default function MarketPage() {
   }
 
   const ok = chainId === GIWA
+
+  function Btn({ children, onClick, color, action }: { children: React.ReactNode; onClick: () => void; color: string; action: string }) {
+    const active = loadingAction === action
+    return (
+      <button disabled={!!loadingAction} onClick={onClick}
+        className="w-full rounded-lg border-none text-sm font-semibold flex items-center justify-center gap-2"
+        style={{ padding: "11px 0", background: color, color: "#000", opacity: loadingAction ? 0.6 : 1, cursor: loadingAction ? "not-allowed" : "pointer" }}>
+        {active && <Spinner />}
+        {children}
+      </button>
+    )
+  }
 
   if (!address) {
     return (
@@ -269,30 +275,25 @@ export default function MarketPage() {
             </button>
           </div>
           <div style={{ marginTop: 12 }}>
-            {mode === "supply" && na && (
-              <ActionBtn onClick={() => run("supply", handleSupply)} color="var(--accent-yellow)" loading={loading}>
-                Approve Pool
-              </ActionBtn>
-            )}
-            {mode === "supply" && !na && (
-              <ActionBtn onClick={() => run("supply", handleSupply)} color="var(--accent-green)" loading={loading}>
+            {mode === "supply" && (
+              <Btn onClick={() => run("supply", handleSupply)} color="var(--accent-green)" action="supply">
                 Supply {symStr}
-              </ActionBtn>
+              </Btn>
             )}
             {mode === "withdraw" && (
-              <ActionBtn onClick={() => run("withdraw", handleWithdraw)} color="var(--accent-yellow)" loading={loading}>
+              <Btn onClick={() => run("withdraw", handleWithdraw)} color="var(--accent-yellow)" action="withdraw">
                 Withdraw {symStr}
-              </ActionBtn>
+              </Btn>
             )}
             {mode === "borrow" && (
-              <ActionBtn onClick={() => run("borrow", handleBorrow)} color="var(--accent-yellow)" loading={loading}>
+              <Btn onClick={() => run("borrow", handleBorrow)} color="var(--accent-yellow)" action="borrow">
                 Borrow {symStr}
-              </ActionBtn>
+              </Btn>
             )}
             {mode === "repay" && (
-              <ActionBtn onClick={() => run("repay", handleRepay)} color="var(--accent-green)" loading={loading}>
+              <Btn onClick={() => run("repay", handleRepay)} color="var(--accent-green)" action="repay">
                 Repay {symStr}
-              </ActionBtn>
+              </Btn>
             )}
           </div>
         </div>
@@ -312,9 +313,9 @@ export default function MarketPage() {
         <div style={{ padding: "6px 18px 14px", display: "flex", gap: 8, alignItems: "center" }}>
           <input value={mint} onChange={e => setMint(e.target.value)}
             style={{ width: 100, padding: "10px 14px", borderRadius: 8, fontSize: 14, textAlign: "center" }} />
-          <ActionBtn onClick={() => run("mint", handleMint)} color="var(--btn-primary-bg)" loading={loading}>
+          <Btn onClick={() => run("mint", handleMint)} color="var(--btn-primary-bg)" action="mint">
             Mint {symStr}
-          </ActionBtn>
+          </Btn>
         </div>
       </div>
 
