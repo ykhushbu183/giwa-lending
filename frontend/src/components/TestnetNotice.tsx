@@ -1,10 +1,4 @@
-import { useAccount } from "wagmi"
-
 export default function TestnetNotice() {
-  const { isConnected } = useAccount()
-
-  if (!isConnected) return null
-
   return (
     <div
       style={{
